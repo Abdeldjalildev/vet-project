@@ -51,6 +51,7 @@ export const trackAnalyticsEvent = async ({
     visitorId,
     language,
     deviceType: window.matchMedia('(pointer: coarse)').matches ? 'touch' : 'pointer',
+    eventId: crypto.randomUUID(),
   })
 }
 
