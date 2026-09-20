@@ -19,6 +19,7 @@
 - completed-service value aggregation;
 - revenue/value dashboard section;
 - per-currency presentation;
+- currency-keyed completed-service value aggregation that prevents cross-currency mixing;
 - explicit estimated-value terminology.
 
 ## Evidence boundary
