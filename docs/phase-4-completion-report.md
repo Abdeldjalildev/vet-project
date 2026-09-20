@@ -19,10 +19,12 @@ All five Phase 4 gates have been implemented on GitHub.
 - responsive admin shell;
 - dashboard overview;
 - dedicated appointment management;
-- service CRUD/activation/order management;
+- service create/update/activation/order management plus trusted reference-safe deletion;
 - multilingual service fields;
 - public synchronization through Firestore;
 - no direct appointment lifecycle mutation from the client;
+- no direct service deletion from the client; trusted deletion protects historical appointment references;
+- dashboard appointment ordering and upcoming filtering aligned with date/time semantics;
 - future-phase sections remain bounded placeholders.
 
 ## Explicitly not claimed
