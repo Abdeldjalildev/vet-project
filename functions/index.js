@@ -429,8 +429,9 @@ exports.transitionAppointment = onCall({ region: 'us-central1' }, async (request
         clinicId,
         date: new Date().toISOString().slice(0, 10),
         completedServices: FieldValue.increment(1),
-        estimatedCompletedServiceValue: FieldValue.increment(value),
-        revenueCurrency: currency,
+        estimatedCompletedServiceValueByCurrency: {
+          [currency]: FieldValue.increment(value),
+        },
         revenueUpdatedAt: FieldValue.serverTimestamp(),
       }, { merge: true })
     }
