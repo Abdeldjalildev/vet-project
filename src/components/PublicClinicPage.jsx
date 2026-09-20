@@ -20,6 +20,7 @@ export default function PublicClinicPage({ clinicSlug }) {
 
   useEffect(() => {
     let cancelled = false
+    let unsubscribe = null
 
     const load = async () => {
       setStatus('loading')
@@ -27,7 +28,7 @@ export default function PublicClinicPage({ clinicSlug }) {
         const publicClinic = await getPublicClinicBySlug(clinicSlug)
         if (cancelled) return
 
-        const unsubscribe = subscribePublicClinic(publicClinic.clinicId, {
+        unsubscribe = subscribePublicClinic(publicClinic.clinicId, {
           onClinic: (nextClinic) => {
             if (cancelled) return
             setClinic(nextClinic)
@@ -44,8 +45,6 @@ export default function PublicClinicPage({ clinicSlug }) {
             setStatus(error.message === 'CLINIC_NOT_FOUND' ? 'not-found' : 'error')
           },
         })
-
-        return unsubscribe
       } catch (error) {
         if (!cancelled) {
           setStatus(error.message === 'CLINIC_NOT_FOUND' ? 'not-found' : 'error')
@@ -53,10 +52,7 @@ export default function PublicClinicPage({ clinicSlug }) {
       }
     }
 
-    let unsubscribe
-    load().then((cleanup) => {
-      unsubscribe = cleanup
-    })
+    load()
 
     return () => {
       cancelled = true
