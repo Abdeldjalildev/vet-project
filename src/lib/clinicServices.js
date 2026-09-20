@@ -1,0 +1,63 @@
+import { addDoc, deleteDoc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore'
+import { clinicServicesRef } from './firestore'
+
+const normalizeLocalized = (value) => ({
+  ar: typeof value?.ar === 'string' ? value.ar.trim() : '',
+  en: typeof value?.en === 'string' ? value.en.trim() : '',
+  fr: typeof value?.fr === 'string' ? value.fr.trim() : '',
+})
+
+export const listClinicServices = async (clinicId) => {
+  const snapshot = await getDocs(
+    query(clinicServicesRef(clinicId), orderBy('order', 'asc')),
+  )
+
+  return snapshot.docs.map((document) => ({
+    serviceId: document.id,
+    ...document.data(),
+  }))
+}
+
+export const createClinicService = async (clinicId, input) => {
+  const name = normalizeLocalized(input.name)
+  const description = normalizeLocalized(input.description)
+
+  if (!name.en && !name.ar && !name.fr) {
+    throw new Error('SERVICE_NAME_REQUIRED')
+  }
+
+  return addDoc(clinicServicesRef(clinicId), {
+    name,
+    description,
+    icon: input.icon?.trim() || '🩺',
+    order: Number.isFinite(input.order) ? input.order : 0,
+    active: input.active !== false,
+  })
+}
+
+export const updateClinicService = async (clinicId, serviceId, input) => {
+  const name = normalizeLocalized(input.name)
+  const description = normalizeLocalized(input.description)
+
+  if (!name.en && !name.ar && !name.fr) {
+    throw new Error('SERVICE_NAME_REQUIRED')
+  }
+
+  return updateDoc(clinicServicesRef(clinicId).doc ? clinicServicesRef(clinicId).doc(serviceId) : null, {
+    name,
+    description,
+    icon: input.icon?.trim() || '🩺',
+    order: Number.isFinite(input.order) ? input.order : 0,
+    active: input.active !== false,
+  })
+}
+
+export const setClinicServiceActive = async (clinicId, serviceId, active) => {
+  const services = clinicServicesRef(clinicId)
+  await updateDoc(services.doc ? services.doc(serviceId) : null, { active })
+}
+
+export const deleteClinicService = async (clinicId, serviceId) => {
+  const services = clinicServicesRef(clinicId)
+  await deleteDoc(services.doc ? services.doc(serviceId) : null)
+}
