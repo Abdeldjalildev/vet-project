@@ -19,6 +19,8 @@ const getOrCreateId = (key) => {
   return value
 }
 
+const getSessionStartedKey = (clinicId) => `${ANALYTICS_KEYS.sessionStarted}:${clinicId}`
+
 const getSessionId = () => {
   const existing = window.sessionStorage.getItem(ANALYTICS_KEYS.session)
   if (existing) return existing
@@ -69,9 +71,10 @@ export const trackPublicEvent = async (payload) => {
 }
 
 export const trackSessionStartOnce = async (payload) => {
-  if (window.sessionStorage.getItem(ANALYTICS_KEYS.sessionStarted)) return null
+  const startedKey = getSessionStartedKey(payload.clinicId)
+  if (window.sessionStorage.getItem(startedKey)) return null
   const result = await trackPublicEvent({ ...payload, eventType: 'session_start' })
-  if (result) window.sessionStorage.setItem(ANALYTICS_KEYS.sessionStarted, 'true')
+  if (result) window.sessionStorage.setItem(startedKey, 'true')
   return result
 }
 
