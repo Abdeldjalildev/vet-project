@@ -81,7 +81,6 @@ const resources = {
 
 
        bookingTitle: "احجز موعداً لحيوانك الأليف",
-       bookingSubtitle: "املأ الاستمارة أدناه لتأكيد موعدك في العيادة خلال ثوانٍ.",
        labelPetName: "اسم الحيوان الأليف",
        labelPetType: "نوع الحيوان",
        labelService: "الخدمة المطلوبة",
@@ -94,7 +93,6 @@ const resources = {
        optOther: "أخرى",
        optSelectService: "اختر الخدمة",
        btnSubmitBooking: "تأكيد الحجز الفوري ✨",
-      successMessage: "تم تسجيل موعدك بنجاح! سنكون في انتظاركم 💚",
 
 
 
@@ -174,7 +172,6 @@ thDate: "التاريخ"
 
 
       bookingTitle: "Book an Appointment for Your Pet",
-bookingSubtitle: "Fill out the form below to confirm your clinic appointment in seconds.",
 labelPetName: "Pet Name",
 labelPetType: "Pet Type",
 labelService: "Required Service",
@@ -187,7 +184,6 @@ optBird: "Bird 🐦",
 optOther: "Other",
 optSelectService: "Select Service",
 btnSubmitBooking: "Confirm Appointment ✨",
-successMessage: "Your appointment has been successfully booked! We look forward to seeing you 💚",
 
 
 tipsTitle: "Valuable Veterinary Tips",
@@ -263,7 +259,6 @@ footerLinksTitle: "Liens rapides",
       footerDevelopedBy: "Développé avec ❤️ par Abdeljalil Khelfa",
   
   bookingTitle: "Prendre RDV pour votre animal",
-bookingSubtitle: "Remplissez le formulaire ci-dessous pour confirmer votre rendez-vous en quelques secondes.",
 labelPetName: "Nom de l'animal",
 labelPetType: "Type d'animal",
 labelService: "Service requis",
@@ -275,8 +270,6 @@ optDog: "Chien 🐶",
 optBird: "Oiseau 🐦",
 optOther: "Autre",
 optSelectService: "Choisir le service",
-btnSubmitBooking: "Confirmer le RDV ✨",
-successMessage: "Votre rendez-vous a été enregistré avec succès! Nous vous attendons 💚",
 
 
 tipsTitle: "Conseils Vétérinaires Précieux",
