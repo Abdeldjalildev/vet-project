@@ -6,7 +6,7 @@ const localized = (value) => ({ ar: value?.ar || '', en: value?.en || '', fr: va
 const emptyFaq = { question: { ar: '', en: '', fr: '' }, answer: { ar: '', en: '', fr: '' }, order: 0, active: true }
 
 export default function ClinicContentAdmin({ clinicId, clinic }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [content, setContent] = useState({
     hero: {
       badge: localized(clinic.hero?.badge),
