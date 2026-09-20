@@ -1,7 +1,7 @@
 import { getDocs, query, where } from 'firebase/firestore'
 import {
   clinicFaqsRef,
-  clinicRef,
+  clinicsRef,
   clinicServicesRef,
 } from './firestore'
 
@@ -13,7 +13,7 @@ export const localized = (value, language, fallback = 'en') => {
 
 export const getPublicClinicBySlug = async (slug) => {
   const snapshot = await getDocs(
-    query(clinicRef('unused').parent, where('public', '==', true)),
+    query(clinicsRef, where('public', '==', true)),
   )
   const clinic = snapshot.docs
     .map((document) => ({ clinicId: document.id, ...document.data() }))
