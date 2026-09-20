@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 .vercel
+# Environment files (keep only the committed template)
+.env
+.env.*
+!.env.example
