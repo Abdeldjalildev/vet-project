@@ -1,22 +1,44 @@
-import { addDoc, serverTimestamp } from 'firebase/firestore'
+import { addDoc, collection, getDocs, limit, orderBy, query, serverTimestamp, where } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
+import { getFunctions } from 'firebase/functions'
+import { firebaseApp } from './firebase'
 import { clinicAppointmentsRef } from './firestore'
 
+const functions = getFunctions(firebaseApp, 'us-central1')
+const createPublicAppointmentCall = httpsCallable(functions, 'createPublicAppointment')
+const transitionAppointmentCall = httpsCallable(functions, 'transitionAppointment')
+
 export const createPublicAppointment = async (clinicId, appointment) => {
-  const document = await addDoc(clinicAppointmentsRef(clinicId), {
+  const result = await createPublicAppointmentCall({
     clinicId,
-    petName: appointment.petName.trim(),
-    petType: appointment.petType,
-    ownerName: appointment.ownerName.trim(),
-    ownerPhone: appointment.ownerPhone.trim(),
-    ownerEmail: appointment.ownerEmail?.trim() || '',
-    serviceId: appointment.serviceId,
-    date: appointment.date,
-    time: appointment.time,
-    notes: appointment.notes?.trim() || '',
-    status: 'pending',
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    ...appointment,
   })
 
-  return document.id
+  return result.data.appointmentId
+}
+
+export const transitionAppointment = async (clinicId, appointmentId, status) => {
+  const result = await transitionAppointmentCall({
+    clinicId,
+    appointmentId,
+    status,
+  })
+
+  return result.data
+}
+
+export const listClinicAppointments = async (clinicId) => {
+  const snapshot = await getDocs(
+    query(
+      clinicAppointmentsRef(clinicId),
+      orderBy('date', 'desc'),
+      orderBy('time', 'desc'),
+      limit(100),
+    ),
+  )
+
+  return snapshot.docs.map((document) => ({
+    appointmentId: document.id,
+    ...document.data(),
+  }))
 }
