@@ -15,6 +15,8 @@
 - trusted analytics event recorder;
 - approved event types;
 - anonymous visitor/session identifiers;
+- per-clinic session-start state within a browser session;
+- server-side UUID-shape validation for analytics identities;
 - daily unique-visitor marker;
 - idempotent event IDs;
 - page/session/booking/service tracking;
