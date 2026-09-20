@@ -49,5 +49,7 @@ assert.match(rules, /validFeature/)
 assert.match(rules, /features\\.size\\(\\) <= 12/)
 assert.match(i18nConfig, /vetlife_public_lang/)
 assert.match(i18nConfig, /vetlife_admin_lang/)
+assert.match(functions, /uuidPattern/)
+assert.match(functions, /sessionId is invalid/)
 
 console.log('VetLife contract smoke tests: PASS')
