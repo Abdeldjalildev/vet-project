@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useAuth } from './auth/AuthProvider'
 import ClinicLogin from './components/ClinicLogin'
 import ClinicDashboard from './components/ClinicDashboard'
@@ -27,7 +28,10 @@ function ClinicRoute() {
 }
 
 function Redirect({ path }) {
-  window.location.replace(path)
+  useEffect(() => {
+    window.location.replace(path)
+  }, [path])
+
   return null
 }
 
