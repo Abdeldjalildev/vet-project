@@ -3,8 +3,8 @@ import { firebaseApp } from './firebase'
 
 export const firestore = getFirestore(firebaseApp)
 
+export const clinicsRef = collection(firestore, 'clinics')
 export const clinicRef = (clinicId) => doc(firestore, 'clinics', clinicId)
-
 export const userRef = (uid) => doc(firestore, 'users', uid)
 
 export const clinicServicesRef = (clinicId) =>
