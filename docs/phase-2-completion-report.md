@@ -30,11 +30,12 @@ Those belong to later roadmap gates and/or the pending verification pass.
 - Added realtime public clinic synchronization.
 - Replaced hard-coded service cards with Firestore services.
 - Replaced hard-coded FAQ/content/contact/social data with clinic-managed data.
-- Replaced React-state-only booking with persistent Firestore appointment creation.
-- Tightened public appointment creation through Firestore Rules.
+- Replaced React-state-only booking with persistent Firestore appointment creation through the trusted booking function.
+- Denied direct client appointment writes in Firestore Rules; trusted function is the authoritative public booking path.
 - Removed obsolete demo appointment/dashboard components.
 - Added Phase 2 translation keys.
 - Added optional `VITE_DEFAULT_CLINIC_SLUG`.
+- Aligned public clinic lookup with an indexed-by-query `slug + public + active` Firestore lookup rather than scanning all public clinics client-side.
 
 ## Closure condition
 Phase 2 can be marked CLOSED only after the local/Firebase verification pass records evidence for all five gates.
