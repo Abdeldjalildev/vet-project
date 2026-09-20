@@ -8,7 +8,8 @@ Implemented:
 - public clinic not-found state;
 - public clinic recoverable error state with retry;
 - global React error boundary with reload action;
-- admin loading/error states;
+- admin loading/error states with retry actions for recoverable data-load failures;
+- route-level loading/missing-slug messages use the active i18n resources;
 - analytics loading/error/empty states;
 - services/FAQ/appointment empty states.
 
