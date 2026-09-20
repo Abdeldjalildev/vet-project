@@ -1,7 +1,6 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https')
 const { logger } = require('firebase-functions')
 const { initializeApp } = require('firebase-admin/app')
-const { getAuth } = require('firebase-admin/auth')
 const { getFirestore, FieldValue } = require('firebase-admin/firestore')
 
 initializeApp()
