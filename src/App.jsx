@@ -7,6 +7,7 @@ import ClinicOverview from './components/ClinicOverview'
 import ClinicServicesAdmin from './components/ClinicServicesAdmin'
 import ClinicSettingsAdmin from './components/ClinicSettingsAdmin'
 import ClinicContentAdmin from './components/ClinicContentAdmin'
+import ClinicAnalyticsAdmin from './components/ClinicAnalyticsAdmin'
 import PublicClinicPage from './components/PublicClinicPage'
 import { useTranslation } from 'react-i18next'
 
@@ -50,6 +51,7 @@ function ClinicSection({ section, clinicId, clinic }) {
   if (section === 'services') return <ClinicServicesAdmin clinicId={clinicId} />
   if (section === 'content') return <ClinicContentAdmin clinicId={clinicId} clinic={clinic} />
   if (section === 'settings') return <ClinicSettingsAdmin clinicId={clinicId} clinic={clinic} />
+  if (section === 'analytics') return <ClinicAnalyticsAdmin clinicId={clinicId} />
 
   return (
     <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-gray-700 dark:bg-gray-900">
