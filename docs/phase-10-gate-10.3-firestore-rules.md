@@ -7,7 +7,7 @@
 The ruleset is deny-by-default and grants only the operations required by the frozen product contract.
 
 ## Protected areas
-- Clinic documents: public reads only when the clinic is public; protected reads require membership; writes require active owner/admin membership.
+- Clinic documents: public reads only when the clinic is public; protected reads require active owner/admin membership; writes require active owner/admin membership.
 - Services: active services are public; protected clinic reads require membership; writes require owner/admin membership and validated value fields.
 - FAQs: active FAQs are public; protected clinic reads require membership; writes require owner/admin membership.
 - Appointments: clinic members can read their clinic; direct create/update/delete is denied because booking and lifecycle mutations use trusted Cloud Functions.
