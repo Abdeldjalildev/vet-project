@@ -7,6 +7,7 @@ import './i18n/phase5'
 import './i18n/phase6'
 import './i18n/phase7'
 import './i18n/phase8'
+import './i18n/phase9'
 import App from './App.jsx'
 import { AuthProvider } from './auth/AuthProvider'
 
