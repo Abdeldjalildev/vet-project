@@ -24,7 +24,7 @@
 8. A different clinic's protected data is denied.
 9. Self-created or self-modified membership is denied.
 10. Public reads expose only documents explicitly marked public/active.
-11. Direct client creation of protected appointments is denied.
+11. Malformed public appointment writes are denied, while a valid public appointment for an active public clinic and active service is accepted under the Phase 2 Rules contract.
 12. Direct client writes to analytics aggregates are denied.
 13. Unspecified collections/documents remain denied.
 
