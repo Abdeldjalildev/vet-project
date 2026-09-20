@@ -20,7 +20,8 @@ All five Phase 5 gates have been implemented on GitHub.
 - address, phone, email;
 - opening hours;
 - emergency information;
-- constrained primary/accent branding;
+- constrained primary/accent branding with backend color-shape validation;
+- backend validation for clinic public configuration, managed content, FAQ shape, and HTTPS public URLs;
 - logo management;
 - FAQ CRUD, ordering, activation and multilingual fields;
 - Facebook, Instagram, TikTok, YouTube, WhatsApp and website links;
