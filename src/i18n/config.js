@@ -1,8 +1,18 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
+const INTERFACE_LANGUAGE_KEYS = {
+  public: 'vetlife_public_lang',
+  admin: 'vetlife_admin_lang',
+};
 
-const savedLanguage = localStorage.getItem('vetlife_lang') || 'ar';
+export const getInterfaceLanguageContext = (pathname = window.location.pathname) =>
+  pathname.startsWith('/clinic/') ? 'admin' : 'public';
+
+export const getInterfaceLanguageKey = (context = getInterfaceLanguageContext()) =>
+  INTERFACE_LANGUAGE_KEYS[context];
+
+export const getStoredInterfaceLanguage = (context = getInterfaceLanguageContext()) =>
+  localStorage.getItem(getInterfaceLanguageKey(context)) || 'ar';
 
 const resources = {
   ar: {
@@ -295,10 +305,10 @@ thDate: "Date"
 
 // --- TRANSLATION CORE ENGINE ---
 i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
+    lng: getStoredInterfaceLanguage(),
     fallbackLng: 'ar',
     interpolation: {
       escapeValue: false
@@ -307,12 +317,14 @@ i18n
 
 // Automatically sync document language and direction when language changes dynamically
 i18n.on('languageChanged', (lng) => {
+  const context = getInterfaceLanguageContext();
+  localStorage.setItem(getInterfaceLanguageKey(context), lng);
   document.documentElement.lang = lng;
   document.documentElement.dir = lng.startsWith('ar') ? 'rtl' : 'ltr';
 });
 
-// Initial boot synchronization for document orientation and translation context
-const currentLang = i18n.language || localStorage.getItem('i18nextLng') || 'ar';
+// Initial boot synchronization for the active interface's language and direction.
+const currentLang = getStoredInterfaceLanguage();
 document.documentElement.lang = currentLang;
 document.documentElement.dir = currentLang.startsWith('ar') ? 'rtl' : 'ltr';
 
