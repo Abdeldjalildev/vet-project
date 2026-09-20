@@ -213,6 +213,7 @@ function validateAnalyticsPayload(data) {
   const visitorId = requireString(data.visitorId, 'visitorId', 128)
   const language = requireString(data.language, 'language', 10)
   const deviceType = requireString(data.deviceType || 'unknown', 'deviceType', 20)
+  const eventId = requireString(data.eventId, 'eventId', 128)
   const serviceId = typeof data.serviceId === 'string' ? data.serviceId.trim() : ''
 
   if (!ANALYTICS_EVENT_TYPES.has(eventType)) fail('invalid-argument', 'Analytics event type is invalid.')
@@ -220,14 +221,14 @@ function validateAnalyticsPayload(data) {
   if (!/^[a-z]{2}$/.test(language)) fail('invalid-argument', 'Analytics language is invalid.')
   if (serviceId.length > 128) fail('invalid-argument', 'Analytics service identifier is invalid.')
 
-  return { clinicId, eventType, page, sessionId, visitorId, language, deviceType, serviceId }
+  return { clinicId, eventType, page, sessionId, visitorId, language, deviceType, serviceId, eventId }
 }
 
 exports.recordAnalyticsEvent = onCall({ region: 'us-central1' }, async (request) => {
   const event = validateAnalyticsPayload(request.data)
   const clinicRef = clinics.doc(event.clinicId)
   const date = new Date().toISOString().slice(0, 10)
-  const eventRef = clinicRef.collection('analyticsEvents').doc()
+  const eventRef = clinicRef.collection('analyticsEvents').doc(event.eventId)
   const aggregateRef = clinicRef.collection('analyticsAggregates').doc(date)
   const visitorRef = clinicRef.collection('analyticsVisitors').doc(
     `${date}_${safeDimensionKey(event.visitorId)}`,
