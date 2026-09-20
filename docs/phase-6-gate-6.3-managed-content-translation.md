@@ -25,6 +25,6 @@ Applied to:
 System UI translations remain application-owned. Clinic-managed commercial content remains Firestore data.
 
 ## Runtime evidence required
-Edit representative managed fields in all three languages and verify each public language displays the corresponding stored content, including fallback behavior for missing values.
+Edit representative managed fields in all three languages and verify each public language displays the corresponding stored content, including fallback behavior for missing values. Runtime fallback is implemented by `localized()`: requested language → English → first populated localized value. About features are also constrained to localized title/description structures at the Firestore boundary.
 
 No runtime closure is claimed by this document.
