@@ -1,8 +1,12 @@
 import { useEffect } from 'react'
 import { useAuth } from './auth/AuthProvider'
 import ClinicLogin from './components/ClinicLogin'
-import ClinicDashboard from './components/ClinicDashboard'
+import ClinicAdminLayout from './components/ClinicAdminLayout'
+import ClinicAppointmentsAdmin from './components/ClinicAppointmentsAdmin'
+import ClinicOverview from './components/ClinicOverview'
+import ClinicServicesAdmin from './components/ClinicServicesAdmin'
 import PublicClinicPage from './components/PublicClinicPage'
+import { useTranslation } from 'react-i18next'
 
 function ClinicRoute() {
   const { user, authLoading } = useAuth()
@@ -20,11 +24,35 @@ function ClinicRoute() {
     return user ? <Redirect path="/clinic/dashboard" /> : <ClinicLogin />
   }
 
-  if (path === '/clinic/dashboard') {
-    return user ? <ClinicDashboard /> : <Redirect path="/clinic/login" />
-  }
+  if (!user) return <Redirect path="/clinic/login" />
 
-  return <Redirect path="/clinic/login" />
+  const section = path === '/clinic/dashboard'
+    ? 'dashboard'
+    : path.replace('/clinic/', '').split('/')[0]
+
+  const validSections = ['dashboard', 'appointments', 'services', 'content', 'analytics', 'settings']
+  const activeSection = validSections.includes(section) ? section : 'dashboard'
+
+  return (
+    <ClinicAdminLayout section={activeSection}>
+      {({ clinicId }) => <ClinicSection section={activeSection} clinicId={clinicId} />}
+    </ClinicAdminLayout>
+  )
+}
+
+function ClinicSection({ section, clinicId }) {
+  const { t } = useTranslation()
+
+  if (section === 'dashboard') return <ClinicOverview clinicId={clinicId} />
+  if (section === 'appointments') return <ClinicAppointmentsAdmin clinicId={clinicId} />
+  if (section === 'services') return <ClinicServicesAdmin clinicId={clinicId} />
+
+  return (
+    <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-gray-700 dark:bg-gray-900">
+      <h3 className="text-xl font-black">{t(`adminNav${section[0].toUpperCase()}${section.slice(1)}`)}</h3>
+      <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">{t('phaseComingLater')}</p>
+    </section>
+  )
 }
 
 function Redirect({ path }) {
