@@ -9,6 +9,8 @@
 - Clinic availability is checked before recording events.
 - Clinic-owned analytics paths are used.
 - Duplicate event IDs are ignored.
+- Analytics session, visitor, and event identifiers are required to match UUID v4 shape at the trusted function boundary.
+- The anonymous session-start marker is scoped per clinic.
 - Visitor-day markers prevent repeated daily unique-visitor increments.
 - Dashboard reads aggregate documents rather than raw events.
 
