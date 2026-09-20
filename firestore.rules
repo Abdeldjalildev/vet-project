@@ -5,55 +5,145 @@ service cloud.firestore {
     function signedIn() {
       return request.auth != null;
     }
+
     function membershipExists() {
       return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
+
     function membership() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
+
     function activeMember() {
       return membershipExists() && membership().status == 'active';
     }
+
     function memberOf(clinicId) {
       return activeMember() && membership().clinicId == clinicId;
     }
+
     function ownerOrAdmin() {
-      return activeMember() && (membership().role == 'owner' || membership().role == 'admin');
+      return activeMember() &&
+        (membership().role == 'owner' || membership().role == 'admin');
     }
+
+    function publicClinicFieldsAreSafe() {
+      return resource.data.keys().hasOnly([
+        'slug',
+        'public',
+        'active',
+        'name',
+        'logoUrl',
+        'branding',
+        'contact',
+        'openingHours',
+        'emergencyInformation',
+        'hero',
+        'about',
+        'footer',
+        'socialLinks'
+      ]);
+    }
+
+    function clinicUpdateFieldsAreAllowed() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'name',
+        'logoUrl',
+        'branding',
+        'contact',
+        'openingHours',
+        'emergencyInformation',
+        'hero',
+        'about',
+        'footer',
+        'socialLinks'
+      ]);
+    }
+
+    function publicServiceFieldsAreSafe() {
+      return resource.data.keys().hasOnly([
+        'name',
+        'description',
+        'icon',
+        'price',
+        'currency',
+        'order',
+        'active'
+      ]);
+    }
+
+    function publicFaqFieldsAreSafe() {
+      return resource.data.keys().hasOnly([
+        'question',
+        'answer',
+        'order',
+        'active'
+      ]);
+    }
+
     function validServiceValue() {
       return request.resource.data.price is number &&
         request.resource.data.price >= 0 &&
         request.resource.data.currency is string &&
         request.resource.data.currency.matches('^[A-Z]{3}$');
     }
+
     function existingServiceValueIsValidOrAbsent() {
       return !('price' in request.resource.data) || validServiceValue();
     }
 
     match /clinics/{clinicId} {
-      allow read: if resource.data.public == true || memberOf(clinicId);
+      allow read: if (
+        resource.data.public == true &&
+        resource.data.active == true &&
+        publicClinicFieldsAreSafe()
+      ) || memberOf(clinicId);
+
       allow create: if false;
-      allow update, delete: if memberOf(clinicId) && ownerOrAdmin();
+
+      allow update: if memberOf(clinicId) &&
+        ownerOrAdmin() &&
+        clinicUpdateFieldsAreAllowed();
+
+      allow delete: if false;
 
       match /services/{serviceId} {
-        allow read: if resource.data.active == true || memberOf(clinicId);
-        allow create: if memberOf(clinicId) && ownerOrAdmin() && validServiceValue();
-        allow update: if memberOf(clinicId) && ownerOrAdmin() && existingServiceValueIsValidOrAbsent();
+        allow read: if (
+          resource.data.active == true &&
+          publicServiceFieldsAreSafe()
+        ) || memberOf(clinicId);
+
+        allow create: if memberOf(clinicId) &&
+          ownerOrAdmin() &&
+          validServiceValue();
+
+        allow update: if memberOf(clinicId) &&
+          ownerOrAdmin() &&
+          existingServiceValueIsValidOrAbsent();
+
         allow delete: if memberOf(clinicId) && ownerOrAdmin();
       }
+
       match /faqs/{faqId} {
-        allow read: if resource.data.active == true || memberOf(clinicId);
+        allow read: if (
+          resource.data.active == true &&
+          publicFaqFieldsAreSafe()
+        ) || memberOf(clinicId);
+
         allow create, update, delete: if memberOf(clinicId) && ownerOrAdmin();
       }
+
       match /appointments/{appointmentId} {
         allow read: if memberOf(clinicId);
         allow create: if false;
         allow update, delete: if false;
       }
+
       match /analyticsEvents/{eventId} {
         allow read: if memberOf(clinicId) && ownerOrAdmin();
         allow create, update, delete: if false;
       }
+
       match /analyticsAggregates/{aggregateId} {
         allow read: if memberOf(clinicId) && ownerOrAdmin();
         allow create, update, delete: if false;
