@@ -106,7 +106,7 @@ export default function ClinicServicesAdmin({ clinicId }) {
   }
 
   if (status === 'error') {
-    return <State message={t('adminServicesError')} />
+    return <State message={t('adminServicesError')} retry={load} />
   }
 
   return (
@@ -210,6 +210,6 @@ export default function ClinicServicesAdmin({ clinicId }) {
   )
 }
 
-function State({ message }) {
-  return <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-gray-700 dark:text-gray-400">{message}</div>
+function State({ message, retry }) {
+  return <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-gray-700 dark:text-gray-400" >{message}{retry && <button type="button" onClick={retry} className="mt-4 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white">{t('retry')}</button>}</div>
 }
