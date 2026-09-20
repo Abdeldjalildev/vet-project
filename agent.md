@@ -99,6 +99,9 @@ A deep repository audit of G7.1–G7.5 was completed against the analytics event
 
 Phase 8 implementation is complete on GitHub. Runtime verification remains intentionally deferred so the planned combined verification pass can provide evidence before closure.
 
+### Phase 8 deep-audit repair record — 2026-09-20
+A deep repository audit of G8.1–G8.5 was completed against the service-value, appointment snapshot, completed-service aggregation, dashboard, terminology, and integrity contracts. One substantive integrity defect was found: the daily analytics aggregate stored a single `revenueCurrency` alongside a single numeric completed-service value. If different currencies were completed on the same day, later writes could overwrite the currency label while the dashboard summed the numeric values together, violating the explicit Phase 8 requirement that multiple currencies remain separate. The trusted completion transaction now stores completed-service value in a currency-keyed map, and the dashboard aggregates that map independently per currency. Documentation and contract-smoke coverage were reconciled accordingly. Service price/currency validation, historical appointment snapshots, trusted lifecycle aggregation, and payment-vs-estimated-value terminology were reviewed and retained. Runtime verification remains pending.
+
 ### Phase 9 — Production UX & Reliability
 - G9.1 Loading/Error/Empty States — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
 - G9.2 Form Reliability — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
