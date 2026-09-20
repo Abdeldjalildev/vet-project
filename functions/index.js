@@ -337,6 +337,41 @@ exports.recordAnalyticsEvent = onCall({ region: 'us-central1' }, async (request)
   return { recorded: true }
 })
 
+exports.deleteClinicService = onCall({ region: 'us-central1' }, async (request) => {
+  if (!request.auth) fail('unauthenticated', 'Authentication is required.')
+
+  const membership = await getActiveMembership(request.auth.uid)
+  rejectUnknownFields(request.data, new Set(['clinicId', 'serviceId']), 'service deletion')
+  const clinicId = requireDocumentId(request.data?.clinicId, 'clinicId')
+  const serviceId = requireDocumentId(request.data?.serviceId, 'serviceId')
+
+  if (membership.clinicId !== clinicId) {
+    fail('permission-denied', 'The service does not belong to your clinic.')
+  }
+
+  const clinicRef = clinics.doc(clinicId)
+  const serviceRef = clinicRef.collection('services').doc(serviceId)
+
+  await db.runTransaction(async (transaction) => {
+    const serviceSnapshot = await transaction.get(serviceRef)
+    if (!serviceSnapshot.exists) fail('not-found', 'Service was not found.')
+
+    const appointments = await transaction.get(
+      clinicRef.collection('appointments')
+        .where('serviceId', '==', serviceId)
+        .limit(1),
+    )
+
+    if (!appointments.empty) {
+      fail('failed-precondition', 'The service is referenced by a saved appointment and cannot be deleted.')
+    }
+
+    transaction.delete(serviceRef)
+  })
+
+  return { serviceId, deleted: true }
+})
+
 exports.transitionAppointment = onCall({ region: 'us-central1' }, async (request) => {
   if (!request.auth) fail('unauthenticated', 'Authentication is required.')
 
