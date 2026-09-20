@@ -31,6 +31,8 @@ export default function Faq({ faqs = [] }) {
                 <div key={faq.faqId} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-gray-800 dark:bg-gray-800">
                   <button
                     type="button"
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${faq.faqId}`}
                     onClick={() => setActiveIndex(isOpen ? null : index)}
                     className="flex w-full items-center justify-between p-5 text-start font-bold text-slate-800 transition-colors hover:text-emerald-600 dark:text-slate-200 dark:hover:text-emerald-400"
                   >
@@ -44,7 +46,7 @@ export default function Faq({ faqs = [] }) {
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                       >
-                        <div className="border-t border-slate-100 bg-white/50 p-5 dark:border-gray-700/60 dark:bg-gray-800/40">
+                        <div id={`faq-answer-${faq.faqId}`} className="border-t border-slate-100 bg-white/50 p-5 dark:border-gray-700/60 dark:bg-gray-800/40">
                           <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
                             {localized(faq.answer, i18n.language)}
                           </p>
