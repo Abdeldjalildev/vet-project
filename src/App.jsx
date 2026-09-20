@@ -35,12 +35,12 @@ function ClinicRoute() {
 
   return (
     <ClinicAdminLayout section={activeSection}>
-      {({ clinicId }) => <ClinicSection section={activeSection} clinicId={clinicId} />}
+      {({ clinicId, clinic }) => <ClinicSection section={activeSection} clinicId={clinicId} clinic={clinic} />}
     </ClinicAdminLayout>
   )
 }
 
-function ClinicSection({ section, clinicId }) {
+function ClinicSection({ section, clinicId, clinic }) {
   const { t } = useTranslation()
 
   if (section === 'dashboard') return <ClinicOverview clinicId={clinicId} />
