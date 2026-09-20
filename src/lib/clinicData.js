@@ -1,6 +1,7 @@
-import { getDocs, query, where } from 'firebase/firestore'
+import { getDocs, onSnapshot, query, where } from 'firebase/firestore'
 import {
   clinicFaqsRef,
+  clinicRef,
   clinicsRef,
   clinicServicesRef,
 } from './firestore'
@@ -12,33 +13,55 @@ export const localized = (value, language, fallback = 'en') => {
 }
 
 export const getPublicClinicBySlug = async (slug) => {
-  const snapshot = await getDocs(
-    query(clinicsRef, where('public', '==', true)),
-  )
+  const snapshot = await getDocs(query(clinicsRef, where('public', '==', true)))
   const clinic = snapshot.docs
     .map((document) => ({ clinicId: document.id, ...document.data() }))
     .find((item) => item.slug === slug && item.active !== false)
 
-  if (!clinic) {
-    throw new Error('CLINIC_NOT_FOUND')
-  }
-
+  if (!clinic) throw new Error('CLINIC_NOT_FOUND')
   return clinic
 }
 
-export const getPublicClinicContent = async (clinicId) => {
-  const [servicesSnapshot, faqsSnapshot] = await Promise.all([
-    getDocs(query(clinicServicesRef(clinicId), where('active', '==', true))),
-    getDocs(query(clinicFaqsRef(clinicId), where('active', '==', true))),
-  ])
+export const subscribePublicClinic = (clinicId, { onClinic, onServices, onFaqs, onError }) => {
+  const clinicUnsubscribe = onSnapshot(
+    clinicRef(clinicId),
+    (snapshot) => {
+      if (!snapshot.exists() || snapshot.data().public !== true || snapshot.data().active === false) {
+        onError?.(new Error('CLINIC_NOT_FOUND'))
+        return
+      }
+      onClinic({ clinicId: snapshot.id, ...snapshot.data() })
+    },
+    onError,
+  )
 
-  const services = servicesSnapshot.docs
-    .map((document) => ({ serviceId: document.id, ...document.data() }))
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  const servicesUnsubscribe = onSnapshot(
+    query(clinicServicesRef(clinicId), where('active', '==', true)),
+    (snapshot) => {
+      onServices(
+        snapshot.docs
+          .map((document) => ({ serviceId: document.id, ...document.data() }))
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+      )
+    },
+    onError,
+  )
 
-  const faqs = faqsSnapshot.docs
-    .map((document) => ({ faqId: document.id, ...document.data() }))
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  const faqsUnsubscribe = onSnapshot(
+    query(clinicFaqsRef(clinicId), where('active', '==', true)),
+    (snapshot) => {
+      onFaqs(
+        snapshot.docs
+          .map((document) => ({ faqId: document.id, ...document.data() }))
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+      )
+    },
+    onError,
+  )
 
-  return { services, faqs }
+  return () => {
+    clinicUnsubscribe()
+    servicesUnsubscribe()
+    faqsUnsubscribe()
+  }
 }
