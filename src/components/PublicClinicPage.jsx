@@ -18,6 +18,7 @@ export default function PublicClinicPage({ clinicSlug }) {
   const [services, setServices] = useState([])
   const [faqs, setFaqs] = useState([])
   const [status, setStatus] = useState('loading')
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -25,6 +26,7 @@ export default function PublicClinicPage({ clinicSlug }) {
 
     const load = async () => {
       setStatus('loading')
+      setLoadError('')
       try {
         const publicClinic = await getPublicClinicBySlug(clinicSlug)
         if (cancelled) return
@@ -45,7 +47,9 @@ export default function PublicClinicPage({ clinicSlug }) {
           },
           onError: (error) => {
             if (cancelled) return
-            setStatus(error.message === 'CLINIC_NOT_FOUND' ? 'not-found' : 'error')
+            setLoadError(error.message)
+            setLoadError(error.message)
+          setStatus(error.message === 'CLINIC_NOT_FOUND' ? 'not-found' : 'error')
           },
         })
       } catch (error) {
@@ -68,17 +72,9 @@ export default function PublicClinicPage({ clinicSlug }) {
     document.title = localized(clinic.name, i18n.language) || 'VetLife'
   }, [clinic, i18n.language])
 
-  if (status === 'loading') {
-    return <PageState message="Loading clinic..." />
-  }
-
-  if (status === 'not-found') {
-    return <PageState message="This clinic is not available." />
-  }
-
-  if (status === 'error') {
-    return <PageState message="We could not load this clinic right now." />
-  }
+  if (status === 'loading') return <PageState loading />
+  if (status === 'not-found') return <PageState message="clinicNotFound" />
+  if (status === 'error') return <PageState message="clinicLoadError" retry={() => window.location.reload()} error={loadError} />
 
   return (
     <div
@@ -103,12 +99,16 @@ export default function PublicClinicPage({ clinicSlug }) {
   )
 }
 
-function PageState({ message }) {
+function PageState({ message, loading = false, retry, error }) {
+  const { t } = useTranslation()
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 dark:bg-gray-950">
-      <section className="max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl dark:border-gray-800 dark:bg-gray-900">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white">VetLife</h1>
-        <p className="mt-3 text-sm text-slate-600 dark:text-gray-300">{message}</p>
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 dark:bg-gray-950" aria-live="polite">
+      <section className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl dark:border-gray-800 dark:bg-gray-900">
+        <div className="mx-auto h-12 w-12 rounded-2xl bg-emerald-100 p-3 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400" aria-hidden="true">{loading ? '…' : '!'}</div>
+        <h1 className="mt-5 text-2xl font-black text-slate-900 dark:text-white">VetLife</h1>
+        <p className="mt-3 text-sm text-slate-600 dark:text-gray-300">{loading ? t('clinicLoading') : t(message)}</p>
+        {error && <p className="sr-only">{error}</p>}
+        {retry && <button type="button" onClick={retry} className="mt-6 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-500">{t('retry')}</button>}
       </section>
     </main>
   )
