@@ -70,8 +70,9 @@ export const trackPublicEvent = async (payload) => {
 
 export const trackSessionStartOnce = async (payload) => {
   if (window.sessionStorage.getItem(ANALYTICS_KEYS.sessionStarted)) return null
-  window.sessionStorage.setItem(ANALYTICS_KEYS.sessionStarted, 'true')
-  return trackPublicEvent({ ...payload, eventType: 'session_start' })
+  const result = await trackPublicEvent({ ...payload, eventType: 'session_start' })
+  if (result) window.sessionStorage.setItem(ANALYTICS_KEYS.sessionStarted, 'true')
+  return result
 }
 
 export const listAnalyticsAggregates = async (clinicId, days = 30) => {
