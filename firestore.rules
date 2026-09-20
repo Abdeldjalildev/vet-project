@@ -2,42 +2,20 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
-
-    function membershipExists() {
-      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
-    }
-
-    function membership() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    function activeMember() {
-      return membershipExists() && membership().status == 'active';
-    }
-
-    function memberOf(clinicId) {
-      return activeMember() && membership().clinicId == clinicId;
-    }
-
-    function ownerOrAdmin() {
-      return activeMember() &&
-        (membership().role == 'owner' || membership().role == 'admin');
-    }
+    function signedIn() { return request.auth != null; }
+    function membershipExists() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function membership() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function activeMember() { return membershipExists() && membership().status == 'active'; }
+    function memberOf(clinicId) { return activeMember() && membership().clinicId == clinicId; }
+    function ownerOrAdmin() { return activeMember() && (membership().role == 'owner' || membership().role == 'admin'); }
 
     function validHttpsUrl(value) {
-      return value is string &&
-        (value == '' || value.matches('^https://[^\\s]+$'));
+      return value is string && (value == '' || value.matches('^https://[^ ]+$'));
     }
 
     function validLocalized(value) {
-      return value is map &&
-        value.keys().hasOnly(['ar', 'en', 'fr']) &&
-        value.ar is string &&
-        value.en is string &&
-        value.fr is string;
+      return value is map && value.keys().hasOnly(['ar', 'en', 'fr']) &&
+        value.ar is string && value.en is string && value.fr is string;
     }
 
     function validBranding() {
@@ -76,188 +54,13 @@ service cloud.firestore {
         validLocalized(request.resource.data.contact.address) &&
         request.resource.data.contact.phone is string &&
         request.resource.data.contact.email is string &&
-        (request.resource.data.contact.email == '' ||
-          request.resource.data.contact.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+
-        request.resource.data.socialLinks.keys().hasOnly([
-          'facebook',
-          'instagram',
-          'tiktok',
-          'youtube',
-          'whatsapp',
-          'website'
-        ]) &&
-        validHttpsUrl(request.resource.data.socialLinks.facebook) &&
-        validHttpsUrl(request.resource.data.socialLinks.instagram) &&
-        validHttpsUrl(request.resource.data.socialLinks.tiktok) &&
-        validHttpsUrl(request.resource.data.socialLinks.youtube) &&
-        validHttpsUrl(request.resource.data.socialLinks.whatsapp) &&
-        validHttpsUrl(request.resource.data.socialLinks.website);
-    }
-
-    function clinicUpdateFieldsAreAllowed() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        'name',
-        'description',
-        'logoUrl',
-        'branding',
-        'contact',
-        'openingHours',
-        'emergencyInformation',
-        'hero',
-        'about',
-        'footer',
-        'socialLinks'
-      ]);
-    }
-
-    function serviceFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'name',
-        'description',
-        'icon',
-        'price',
-        'currency',
-        'order',
-        'active'
-      ]);
-    }
-
-    function faqFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'question',
-        'answer',
-        'order',
-        'active'
-      ]);
-    }
-
-    function validFaq() {
-      return validLocalized(request.resource.data.question) &&
-        validLocalized(request.resource.data.answer) &&
-        request.resource.data.order is number &&
-        request.resource.data.active is bool;
-    }
-
-    function validServiceValue() {
-      return request.resource.data.price is number &&
-        request.resource.data.price >= 0 &&
-        request.resource.data.currency is string &&
-        request.resource.data.currency.matches('^[A-Z]{3}$');
-    }
-
-    function existingServiceValueIsValidOrAbsent() {
-      return !('price' in request.resource.data) || validServiceValue();
-    }
-
-    match /clinics/{clinicId} {
-      allow read: if (
-        resource.data.public == true &&
-        resource.data.active == true
-      ) || memberOf(clinicId);
-
-      allow create: if false;
-
-      allow update: if memberOf(clinicId) &&
-        ownerOrAdmin() &&
-        clinicUpdateFieldsAreAllowed() &&
-        request.resource.data.keys().hasOnly([
-          'slug',
-          'public',
-          'active',
-          'name',
-          'description',
-          'logoUrl',
-          'branding',
-          'contact',
-          'openingHours',
-          'emergencyInformation',
-          'hero',
-          'about',
-          'footer',
-          'socialLinks'
-        ]) &&
-        validClinicPublicConfig();
-
-      allow delete: if false;
-
-      match /services/{serviceId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          validServiceValue();
-
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          existingServiceValueIsValidOrAbsent();
-
-        allow delete: if false;
-      }
-
-      match /faqs/{faqId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed() &&
-          validFaq();
-
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed() &&
-          validFaq();
-
-        allow delete: if memberOf(clinicId) && ownerOrAdmin();
-      }
-
-      match /appointments/{appointmentId} {
-        allow read: if memberOf(clinicId);
-        allow create: if false;
-        allow update, delete: if false;
-      }
-
-      match /analyticsEvents/{eventId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-
-      match /analyticsAggregates/{aggregateId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-    }
-
-    match /users/{uid} {
-      allow read: if signedIn() && request.auth.uid == uid;
-      allow create, delete: if false;
-      allow update: if false;
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-)) &&
+        (request.resource.data.contact.email == '' || request.resource.data.contact.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
         request.resource.data.openingHours is map &&
         validLocalized(request.resource.data.emergencyInformation) &&
         validBranding() &&
         validManagedContent() &&
         request.resource.data.socialLinks is map &&
-        request.resource.data.socialLinks.keys().hasOnly([
-          'facebook',
-          'instagram',
-          'tiktok',
-          'youtube',
-          'whatsapp',
-          'website'
-        ]) &&
+        request.resource.data.socialLinks.keys().hasOnly(['facebook', 'instagram', 'tiktok', 'youtube', 'whatsapp', 'website']) &&
         validHttpsUrl(request.resource.data.socialLinks.facebook) &&
         validHttpsUrl(request.resource.data.socialLinks.instagram) &&
         validHttpsUrl(request.resource.data.socialLinks.tiktok) &&
@@ -267,133 +70,50 @@ service cloud.firestore {
     }
 
     function clinicUpdateFieldsAreAllowed() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        'name',
-        'description',
-        'logoUrl',
-        'branding',
-        'contact',
-        'openingHours',
-        'emergencyInformation',
-        'hero',
-        'about',
-        'footer',
-        'socialLinks'
-      ]);
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'logoUrl', 'branding', 'contact', 'openingHours', 'emergencyInformation', 'hero', 'about', 'footer', 'socialLinks']);
     }
 
     function serviceFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'name',
-        'description',
-        'icon',
-        'price',
-        'currency',
-        'order',
-        'active'
-      ]);
+      return request.resource.data.keys().hasOnly(['name', 'description', 'icon', 'price', 'currency', 'order', 'active']);
     }
-
     function faqFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'question',
-        'answer',
-        'order',
-        'active'
-      ]);
+      return request.resource.data.keys().hasOnly(['question', 'answer', 'order', 'active']);
     }
-
+    function validFaq() {
+      return validLocalized(request.resource.data.question) && validLocalized(request.resource.data.answer) &&
+        request.resource.data.order is number && request.resource.data.active is bool;
+    }
     function validServiceValue() {
-      return request.resource.data.price is number &&
-        request.resource.data.price >= 0 &&
-        request.resource.data.currency is string &&
-        request.resource.data.currency.matches('^[A-Z]{3}$');
+      return request.resource.data.price is number && request.resource.data.price >= 0 &&
+        request.resource.data.currency is string && request.resource.data.currency.matches('^[A-Z]{3}$');
     }
-
-    function existingServiceValueIsValidOrAbsent() {
-      return !('price' in request.resource.data) || validServiceValue();
-    }
+    function existingServiceValueIsValidOrAbsent() { return !('price' in request.resource.data) || validServiceValue(); }
 
     match /clinics/{clinicId} {
-      allow read: if (
-        resource.data.public == true &&
-        resource.data.active == true
-      ) || memberOf(clinicId);
-
+      allow read: if (resource.data.public == true && resource.data.active == true) || memberOf(clinicId);
       allow create: if false;
-
-      allow update: if memberOf(clinicId) &&
-        ownerOrAdmin() &&
-        clinicUpdateFieldsAreAllowed() &&
-        request.resource.data.keys().hasOnly([
-          'slug',
-          'public',
-          'active',
-          'name',
-          'description',
-          'logoUrl',
-          'branding',
-          'contact',
-          'openingHours',
-          'emergencyInformation',
-          'hero',
-          'about',
-          'footer',
-          'socialLinks'
-        ]) &&
+      allow update: if memberOf(clinicId) && ownerOrAdmin() && clinicUpdateFieldsAreAllowed() &&
+        request.resource.data.keys().hasOnly(['slug', 'public', 'active', 'name', 'description', 'logoUrl', 'branding', 'contact', 'openingHours', 'emergencyInformation', 'hero', 'about', 'footer', 'socialLinks']) &&
         validClinicPublicConfig();
-
       allow delete: if false;
 
       match /services/{serviceId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          validServiceValue();
-
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          existingServiceValueIsValidOrAbsent();
-
+        allow read: if resource.data.active == true || memberOf(clinicId);
+        allow create: if memberOf(clinicId) && ownerOrAdmin() && serviceFieldsAreAllowed() && validServiceValue();
+        allow update: if memberOf(clinicId) && ownerOrAdmin() && serviceFieldsAreAllowed() && existingServiceValueIsValidOrAbsent();
         allow delete: if false;
       }
 
       match /faqs/{faqId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed();
-
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed();
-
+        allow read: if resource.data.active == true || memberOf(clinicId);
+        allow create: if memberOf(clinicId) && ownerOrAdmin() && faqFieldsAreAllowed() && validFaq();
+        allow update: if memberOf(clinicId) && ownerOrAdmin() && faqFieldsAreAllowed() && validFaq();
         allow delete: if memberOf(clinicId) && ownerOrAdmin();
       }
 
-      match /appointments/{appointmentId} {
-        allow read: if memberOf(clinicId);
-        allow create: if false;
-        allow update, delete: if false;
-      }
-
-      match /analyticsEvents/{eventId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-
-      match /analyticsAggregates/{aggregateId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
+      match /appointments/{appointmentId} { allow read: if memberOf(clinicId); allow create: if false; allow update, delete: if false; }
+      match /analyticsEvents/{eventId} { allow read: if memberOf(clinicId) && ownerOrAdmin(); allow create, update, delete: if false; }
+      match /analyticsAggregates/{aggregateId} { allow read: if memberOf(clinicId) && ownerOrAdmin(); allow create, update, delete: if false; }
     }
 
     match /users/{uid} {
@@ -402,8 +122,6 @@ service cloud.firestore {
       allow update: if false;
     }
 
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    match /{document=**} { allow read, write: if false; }
   }
 }
