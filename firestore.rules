@@ -6,7 +6,7 @@ service cloud.firestore {
     function membershipExists() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
     function membership() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
     function activeMember() { return membershipExists() && membership().status == 'active'; }
-    function memberOf(clinicId) { return activeMember() && membership().clinicId == clinicId; }
+    function memberOf(clinicId) { return activeMember() && (membership().role == 'owner' || membership().role == 'admin') && membership().clinicId == clinicId; }
     function ownerOrAdmin() { return activeMember() && (membership().role == 'owner' || membership().role == 'admin'); }
 
     function validHttpsUrl(value) {
