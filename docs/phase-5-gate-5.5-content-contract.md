@@ -21,7 +21,7 @@ The customer-facing commercial content surface is now configuration/data driven 
 | Social links | clinic document |
 | Footer content | clinic document |
 
-System UI strings remain application-owned translations and are not treated as clinic content.
+System UI strings remain application-owned translations and are not treated as clinic content. Managed clinic content remains bounded to the approved structured fields; Firestore validates the hero/about/footer shapes and localized fields rather than accepting arbitrary page-builder data.
 
 The product intentionally does not expose arbitrary page-builder controls or custom CSS.
 
