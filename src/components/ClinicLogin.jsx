@@ -59,7 +59,7 @@ export default function ClinicLogin() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label htmlFor="clinic-email" className="mb-2 block text-sm font-semibold text-slate-700 dark:text-gray-300">
-              Email
+              {t('authEmail')}
             </label>
             <input
               id="clinic-email"
@@ -73,7 +73,7 @@ export default function ClinicLogin() {
 
           <div>
             <label htmlFor="clinic-password" className="mb-2 block text-sm font-semibold text-slate-700 dark:text-gray-300">
-              Password
+              {t('authPassword')}
             </label>
             <input
               id="clinic-password"
