@@ -11,7 +11,8 @@
 - Only completed appointments contribute to completed-service value.
 - Appointment completion is already protected by the approved lifecycle state machine.
 - Revenue aggregation is server-authoritative.
-- Multiple currencies are displayed separately rather than numerically combined.
+- Multiple currencies are stored and displayed separately rather than numerically combined.
+- Daily aggregate writes use a currency-keyed value map so one day's different currencies cannot overwrite or be summed under a single currency label.
 
 ## Terminology
 The product does not claim to process or receive payments.
