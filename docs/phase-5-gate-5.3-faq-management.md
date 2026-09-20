@@ -11,7 +11,7 @@ Clinic owner/admin can:
 - delete FAQ;
 - manage question and answer in Arabic, English, and French.
 
-The public FAQ section reads active FAQs from the same clinic-owned collection.
+The public FAQ section reads active FAQs from the same clinic-owned collection. Firestore also constrains FAQ fields to the approved shape and requires localized question/answer maps, numeric order, and boolean active state.
 
 Runtime evidence required:
 - CRUD operations persist;
