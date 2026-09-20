@@ -15,6 +15,8 @@ const translations = {
     openMenu: 'فتح قائمة التنقل',
     closeMenu: 'إغلاق قائمة التنقل',
     publicNavigation: 'التنقل العام',
+    checkingClinicSession: 'جارٍ التحقق من جلسة العيادة…',
+    publicSlugRequired: 'أضف معرّف العيادة العام إلى الرابط باستخدام /c/<clinicSlug>.',
   },
   en: {
     unexpectedErrorTitle: 'Something went wrong',
@@ -30,6 +32,8 @@ const translations = {
     openMenu: 'Open navigation menu',
     closeMenu: 'Close navigation menu',
     publicNavigation: 'Public navigation',
+    checkingClinicSession: 'Checking clinic session…',
+    publicSlugRequired: 'Add a public clinic slug to the URL using /c/<clinicSlug>.',
   },
   fr: {
     unexpectedErrorTitle: 'Une erreur est survenue',
@@ -45,6 +49,8 @@ const translations = {
     openMenu: 'Ouvrir le menu de navigation',
     closeMenu: 'Fermer le menu de navigation',
     publicNavigation: 'Navigation publique',
+    checkingClinicSession: 'Vérification de la session de la clinique…',
+    publicSlugRequired: 'Ajoutez le slug public de la clinique à l’URL avec /c/<clinicSlug>.'
   },
 }
 
