@@ -13,7 +13,7 @@
 
 ### Authorization
 - Membership is resolved from `users/{uid}`.
-- Accepted roles are owner/admin.
+- Accepted roles are owner/admin, and the protected clinic-read helper enforces that role boundary.
 - Clinic slug and clinicId are not treated as credentials.
 - Trusted appointment mutations enforce membership and clinic match.
 - Client membership mutation is denied.
