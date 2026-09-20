@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { localized, getPublicClinicBySlug, getPublicClinicContent } from '../lib/clinicData'
+import { localized, getPublicClinicBySlug, subscribePublicClinic } from '../lib/clinicData'
 import Navbar from './Navbar'
 import Hero from './Hero'
 import Services from './Services'
@@ -25,24 +25,42 @@ export default function PublicClinicPage({ clinicSlug }) {
       setStatus('loading')
       try {
         const publicClinic = await getPublicClinicBySlug(clinicSlug)
-        const content = await getPublicClinicContent(publicClinic.clinicId)
-
         if (cancelled) return
 
-        setClinic(publicClinic)
-        setServices(content.services)
-        setFaqs(content.faqs)
-        setStatus('ready')
+        const unsubscribe = subscribePublicClinic(publicClinic.clinicId, {
+          onClinic: (nextClinic) => {
+            if (cancelled) return
+            setClinic(nextClinic)
+            setStatus('ready')
+          },
+          onServices: (nextServices) => {
+            if (!cancelled) setServices(nextServices)
+          },
+          onFaqs: (nextFaqs) => {
+            if (!cancelled) setFaqs(nextFaqs)
+          },
+          onError: (error) => {
+            if (cancelled) return
+            setStatus(error.message === 'CLINIC_NOT_FOUND' ? 'not-found' : 'error')
+          },
+        })
+
+        return unsubscribe
       } catch (error) {
-        if (cancelled) return
-        setStatus(error.message === 'CLINIC_NOT_FOUND' ? 'not-found' : 'error')
+        if (!cancelled) {
+          setStatus(error.message === 'CLINIC_NOT_FOUND' ? 'not-found' : 'error')
+        }
       }
     }
 
-    load()
+    let unsubscribe
+    load().then((cleanup) => {
+      unsubscribe = cleanup
+    })
 
     return () => {
       cancelled = true
+      unsubscribe?.()
     }
   }, [clinicSlug])
 
