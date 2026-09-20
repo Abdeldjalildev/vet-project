@@ -9,7 +9,7 @@ An anonymous random visitor identifier is stored locally in the browser. It is n
 A server-side visitor-day marker prevents the same anonymous visitor from incrementing the daily unique-visitor counter repeatedly.
 
 ## Session
-A random session identifier is stored in sessionStorage. session_start is emitted once per browser session.
+A random session identifier is stored in sessionStorage. session_start is emitted once per browser session per clinic. The session identifier remains browser-session scoped, while the emitted-start marker is namespaced by clinic so visiting a second public clinic in the same browser session does not suppress that clinic's session count.
 
 ## Page views
 page_view is emitted for the resolved public clinic page.
