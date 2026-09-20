@@ -57,6 +57,9 @@ export default function Services({ services = [], clinicId }) {
                 <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                   {localized(service.description, i18n.language)}
                 </p>
+                <p className="mt-4 text-sm font-black text-emerald-700 dark:text-emerald-400">
+                  {service.price ?? 0} {service.currency || 'DZD'}
+                </p>
               </article>
             ))}
           </div>
