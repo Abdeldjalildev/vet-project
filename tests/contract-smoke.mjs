@@ -10,6 +10,7 @@ const functions = read('functions/index.js')
 const app = read('src/App.jsx')
 const main = read('src/main.jsx')
 const analyticsAdmin = read('src/components/ClinicAnalyticsAdmin.jsx')
+const bookingForm = read('src/components/BookingForm.jsx')
 const i18nConfig = read('src/i18n/config.js')
 
 assert.equal(typeof packageJson.scripts.build, 'string')
@@ -56,3 +57,6 @@ assert.match(functions, /estimatedCompletedServiceValueByCurrency/)
 assert.match(analyticsAdmin, /estimatedCompletedServiceValueByCurrency/)
 
 console.log('VetLife contract smoke tests: PASS')
+
+assert.match(bookingForm, /trackPublicEvent.*booking_completed/)
+assert.match(bookingForm, /createPublicAppointment/)
