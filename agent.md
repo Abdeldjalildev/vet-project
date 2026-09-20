@@ -87,6 +87,9 @@ A repository-level deep audit of G6.1–G6.5 was completed against the multiling
 
 Phase 7 implementation is complete on GitHub. Runtime verification remains intentionally deferred so the planned combined verification pass can provide evidence before closure.
 
+### Phase 7 deep-audit repair record — 2026-09-20
+A deep repository audit of G7.1–G7.5 was completed against the analytics event, visitor/session, aggregation, dashboard, security-rule, and cost-safety contracts. Two concrete defects were found and repaired: the browser's session-start marker was global across clinics, which could suppress the first session event for a second clinic visited in the same browser session; it is now namespaced by clinic. The trusted analytics function accepted arbitrary strings for session, visitor, and event identifiers even though the client generates UUID v4 identifiers; it now enforces UUID v4 shape and rejects slash-containing service identifiers. The dashboard's aggregate-window semantics, server-mediated writes, clinic isolation, idempotent event documents, and bounded aggregate reads were reviewed and retained. Firebase's current callable/App Check guidance was reviewed: anonymous analytics endpoints can benefit from App Check before commercial release, but enabling it is an environment/runtime deployment decision and was not silently introduced during this audit. Runtime verification remains pending.
+
 ### Phase 8 — Revenue & Business Analytics
 - G8.1 Service Value — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
 - G8.2 Appointment Value — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
