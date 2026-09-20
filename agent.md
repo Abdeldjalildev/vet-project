@@ -18,6 +18,9 @@
 
 Phase 1 is intentionally left pending until the local/Firebase verification pass is performed.
 
+### Phase 1 deep-audit repair record — 2026-09-20
+A repository-level deep audit of G1.1–G1.5 was completed against this contract and the Firebase/Firestore security model. The audit reconciled stale G1.1 documentation and tightened client-side Firestore write boundaries for clinic, service, and FAQ documents. Public clinic lookup was aligned with the `public == true` + `active == true` rule constraints. No Phase 0 contract or Phase 1 authentication architecture was changed. Runtime Firebase/Rules verification remains pending and is not implied by this repair.
+
 ### Phase 2 — Public Website → Real Data
 - G2.1 Clinic Configuration — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
 - G2.2 Dynamic Services — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
