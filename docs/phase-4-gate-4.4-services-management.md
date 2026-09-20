@@ -11,7 +11,8 @@ Implemented:
 - read/list services ordered by order;
 - edit service;
 - activate/deactivate service;
-- permanent delete with confirmation;
+- permanent delete with confirmation when the service has no saved appointment references;
+- deletion is blocked when historical appointments reference the service; deactivation remains available;
 - multilingual service name/description for Arabic, English, and French;
 - icon;
 - display order;
