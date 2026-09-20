@@ -75,6 +75,9 @@ A repository-level deep audit of G5.1–G5.5 was completed against this contract
 
 Phase 4, Phase 5, and Phase 6 implementations are complete on GitHub. Runtime verification remains intentionally deferred so the planned combined verification pass can provide evidence before closure.
 
+### Phase 6 deep-audit repair record — 2026-09-20
+A repository-level deep audit of G6.1–G6.5 was completed against the multilingual contract and the Phase 0–5 data/content boundaries. The audit found three concrete issues: the base i18n resource contained duplicate keys, the admin FAQ preview always preferred English regardless of the active admin language, and Firestore only validated the managed feature list as a list without validating each feature's localized title/description structure. These were repaired by removing duplicate base keys, making the admin FAQ preview use the active language with the shared localized fallback, and enforcing bounded localized feature objects (including a list-size cap) at the Firestore boundary. The independent public/admin persistence model and document direction synchronization were reviewed and retained. Runtime multilingual/RTL persistence evidence remains pending.
+
 ### Phase 7 — Analytics
 - G7.1 Event Model — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
 - G7.2 Visitor/Session Logic — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
