@@ -125,7 +125,8 @@ export default function ClinicAdminLayout({ section, children }) {
           </nav>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8">
+        <a href="#admin-main-content" className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-white focus:px-4 focus:py-3 focus:font-bold focus:shadow-xl dark:focus:bg-gray-900">{t('skipToContent')}</a>
+        <main id="admin-main-content" className="p-4 sm:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">{children({ clinicId: membership.clinicId, clinic })}</div>
         </main>
       </div>
