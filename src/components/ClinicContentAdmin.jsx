@@ -104,10 +104,29 @@ export default function ClinicContentAdmin({ clinicId, clinic }) {
         <h3 className="text-lg font-black">{t('managedContentTitle')}</h3>
         <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">{t('managedContentHint')}</p>
         <form onSubmit={saveContent} className="mt-6 space-y-6">
+          <LocalizedFields label={t('heroBadge')} value={content.hero.badge} onChange={(badge) => setContent((v) => ({ ...v, hero: { ...v.hero, badge } }))} />
           <LocalizedFields label={t('heroContent')} value={content.hero.title} onChange={(title) => setContent((v) => ({ ...v, hero: { ...v.hero, title } }))} />
           <LocalizedFields label={t('heroDescription')} value={content.hero.description} onChange={(description) => setContent((v) => ({ ...v, hero: { ...v.hero, description } }))} textarea />
           <LocalizedFields label={t('aboutTitle')} value={content.about.title} onChange={(title) => setContent((v) => ({ ...v, about: { ...v.about, title } }))} />
           <LocalizedFields label={t('aboutDescription')} value={content.about.description} onChange={(description) => setContent((v) => ({ ...v, about: { ...v.about, description } }))} textarea />
+          <LocalizedFields label={t('aboutQuote')} value={content.about.quote} onChange={(quote) => setContent((v) => ({ ...v, about: { ...v.about, quote } }))} textarea />
+          <fieldset className="space-y-4">
+            <legend className="text-sm font-bold">{t('aboutFeatures')}</legend>
+            {content.about.features.map((feature, index) => (
+              <div key={feature.id || index} className="rounded-2xl border border-slate-200 p-4 dark:border-gray-800">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <span className="text-sm font-bold">{t('feature')} {index + 1}</span>
+                  <button type="button" onClick={() => setContent((v) => ({ ...v, about: { ...v.about, features: v.about.features.filter((_, i) => i !== index) } }))} className="text-xs font-bold text-red-700">{t('deleteFeature')}</button>
+                </div>
+                <div className="grid gap-4 md:grid-cols-[120px_1fr]">
+                  <Field label={t('featureIcon')} value={feature.icon || ''} onChange={(icon) => setContent((v) => ({ ...v, about: { ...v.about, features: v.about.features.map((item, i) => i === index ? { ...item, icon } : item) } }))} />
+                  <LocalizedFields label={t('featureTitle')} value={localized(feature.title)} onChange={(title) => setContent((v) => ({ ...v, about: { ...v.about, features: v.about.features.map((item, i) => i === index ? { ...item, title } : item) } }))} />
+                </div>
+                <LocalizedFields label={t('featureDescription')} value={localized(feature.description)} onChange={(description) => setContent((v) => ({ ...v, about: { ...v.about, features: v.about.features.map((item, i) => i === index ? { ...item, description } : item) } }))} textarea />
+              </div>
+            ))}
+            <button type="button" onClick={() => setContent((v) => ({ ...v, about: { ...v.about, features: [...v.about.features, { id: crypto.randomUUID(), icon: '🐾', title: { ar: '', en: '', fr: '' }, description: { ar: '', en: '', fr: '' } }] } }))} className="rounded-xl border px-4 py-2 text-sm font-bold dark:border-gray-700">{t('addFeature')}</button>
+          </fieldset>
           <LocalizedFields label={t('footerAbout')} value={content.footer.about} onChange={(about) => setContent((v) => ({ ...v, footer: { ...v.footer, about } }))} textarea />
           <LocalizedFields label={t('footerCopyright')} value={content.footer.copyright} onChange={(copyright) => setContent((v) => ({ ...v, footer: { ...v.footer, copyright } }))} />
           <div className="grid gap-4 md:grid-cols-2">
