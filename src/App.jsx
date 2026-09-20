@@ -13,12 +13,13 @@ import { useTranslation } from 'react-i18next'
 
 function ClinicRoute() {
   const { user, authLoading } = useAuth()
+  const { t } = useTranslation()
   const path = window.location.pathname
 
   if (authLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-gray-950">
-        <p className="text-sm font-semibold text-slate-600 dark:text-gray-300">Checking clinic session…</p>
+        <p className="text-sm font-semibold text-slate-600 dark:text-gray-300">{t('checkingClinicSession')}</p>
       </main>
     )
   }
@@ -83,12 +84,13 @@ function PublicRoute() {
   const clinicSlug = getPublicClinicSlug()
 
   if (!clinicSlug) {
+    const { t } = useTranslation()
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 dark:bg-gray-950">
         <section className="max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl dark:border-gray-800 dark:bg-gray-900">
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">VetLife</h1>
           <p className="mt-3 text-sm text-slate-600 dark:text-gray-300">
-            Add a public clinic slug to the URL using <code>/c/&lt;clinicSlug&gt;</code>.
+            {t('publicSlugRequired')}
           </p>
         </section>
       </main>
