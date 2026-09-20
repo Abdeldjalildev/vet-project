@@ -115,7 +115,7 @@ service cloud.firestore {
       match /appointments/{appointmentId} {
         allow read: if memberOf(clinicId);
         allow create: if validPublicAppointment(clinicId);
-        allow update, delete: if memberOf(clinicId) && ownerOrAdmin();
+        // Appointment writes go through trusted Cloud Functions so lifecycle and conflict rules cannot be bypassed.\n        allow update, delete: if false;
       }
 
       match /analyticsEvents/{eventId} {
