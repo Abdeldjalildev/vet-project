@@ -7,6 +7,7 @@ Implemented:
 - existing client validation preserved;
 - booking submit state prevents duplicate submission;
 - booking conflict errors are surfaced with a user-facing message;
+- successful appointment creation is not reported as failed if the non-critical analytics completion event fails;
 - appointment action errors are surfaced without losing the current page;
 - service/content/settings save failures are surfaced;
 - autocomplete/input semantics added to owner contact fields;
