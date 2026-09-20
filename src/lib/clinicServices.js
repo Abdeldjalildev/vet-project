@@ -1,5 +1,5 @@
-import { addDoc, deleteDoc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore'
-import { clinicServicesRef } from './firestore'
+import { addDoc, deleteDoc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore'
+import { clinicAppointmentsRef, clinicServicesRef } from './firestore'
 
 const normalizeLocalized = (value) => ({
   ar: typeof value?.ar === 'string' ? value.ar.trim() : '',
@@ -43,7 +43,7 @@ export const updateClinicService = async (clinicId, serviceId, input) => {
     throw new Error('SERVICE_NAME_REQUIRED')
   }
 
-  return updateDoc(clinicServicesRef(clinicId).doc ? clinicServicesRef(clinicId).doc(serviceId) : null, {
+  await updateDoc(clinicServicesRef(clinicId).doc(serviceId), {
     name,
     description,
     icon: input.icon?.trim() || '🩺',
@@ -53,11 +53,17 @@ export const updateClinicService = async (clinicId, serviceId, input) => {
 }
 
 export const setClinicServiceActive = async (clinicId, serviceId, active) => {
-  const services = clinicServicesRef(clinicId)
-  await updateDoc(services.doc ? services.doc(serviceId) : null, { active })
+  await updateDoc(clinicServicesRef(clinicId).doc(serviceId), { active })
 }
 
 export const deleteClinicService = async (clinicId, serviceId) => {
-  const services = clinicServicesRef(clinicId)
-  await deleteDoc(services.doc ? services.doc(serviceId) : null)
+  const appointments = await getDocs(
+    query(clinicAppointmentsRef(clinicId), where('serviceId', '==', serviceId)),
+  )
+
+  if (!appointments.empty) {
+    throw new Error('SERVICE_IN_USE')
+  }
+
+  await deleteDoc(clinicServicesRef(clinicId).doc(serviceId))
 }
