@@ -22,6 +22,7 @@ export default function Footer({ clinic }) {
         <div>
           <h4 className="mb-3 font-bold text-white">{t('footerContactTitle')}</h4>
           <ul className="space-y-2 text-sm">
+            {clinic.emergencyInformation && <li className="rounded-xl bg-red-950/40 p-3 text-red-200">🚨 {localized(clinic.emergencyInformation, i18n.language)}</li>}
             {contact.address && <li>📍 {localized(contact.address, i18n.language)}</li>}
             {contact.phone && <li>📞 <a href={`tel:${contact.phone}`} className="hover:text-sky-400">{contact.phone}</a></li>}
             {contact.email && <li>✉️ <a href={`mailto:${contact.email}`} className="break-all hover:text-sky-400">{contact.email}</a></li>}
