@@ -43,8 +43,9 @@ export default function ClinicAnalyticsAdmin({ clinicId }) {
   const revenueByCurrency = useMemo(() => {
     const values = {}
     aggregates.forEach((day) => {
-      const currency = day.revenueCurrency || 'DZD'
-      values[currency] = (values[currency] || 0) + (day.estimatedCompletedServiceValue || 0)
+      Object.entries(day.estimatedCompletedServiceValueByCurrency || {}).forEach(([currency, value]) => {
+        values[currency] = (values[currency] || 0) + (Number(value) || 0)
+      })
     })
     return Object.entries(values).sort(([a], [b]) => a.localeCompare(b))
   }, [aggregates])
