@@ -5,7 +5,7 @@
 
 The clinic analytics dashboard now displays:
 - completed services;
-- estimated completed-service value by currency;
+- estimated completed-service value by currency, read from the currency-keyed aggregate map;
 - existing visitor/page/session/booking metrics.
 
 The dashboard reads daily aggregates and does not scan raw appointments for every render.
