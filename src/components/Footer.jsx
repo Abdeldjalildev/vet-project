@@ -34,7 +34,7 @@ export default function Footer({ clinic }) {
           <ul className="mb-6 space-y-2 text-sm">
             {Object.entries(clinic.openingHours || {}).map(([day, hours]) => (
               <li key={day} className="flex justify-between gap-4">
-                <span>{day}</span>
+                <span>{t(`day_${day}`)}</span>
                 <span className="text-slate-300">{localized(hours, i18n.language)}</span>
               </li>
             ))}
