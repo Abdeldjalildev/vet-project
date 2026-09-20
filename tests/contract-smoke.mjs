@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 
 const read = (path) => readFileSync(new URL('../' + path, import.meta.url), 'utf8')
 const packageJson = JSON.parse(read('package.json'))
+const packageLock = JSON.parse(read('package-lock.json'))
 const firebaseJson = JSON.parse(read('firebase.json'))
 const functionsPackage = JSON.parse(read('functions/package.json'))
 const rules = read('firestore.rules')
@@ -19,6 +20,10 @@ assert.equal(firebaseJson.firestore.rules, 'firestore.rules')
 assert.equal(firebaseJson.firestore.indexes, 'firestore.indexes.json')
 assert.equal(firebaseJson.functions.source, 'functions')
 assert.equal(functionsPackage.engines.node, '20')
+assert.deepEqual(packageLock.packages[''].dependencies, packageJson.dependencies)
+assert.deepEqual(packageLock.packages[''].devDependencies, packageJson.devDependencies)
+assert.equal(packageLock.packages['node_modules/@emnapi/core'].version, '1.11.3')
+assert.equal(packageLock.packages['node_modules/@emnapi/runtime'].version, '1.11.3')
 
 for (const route of ['/clinic/login', '/clinic/dashboard', '/clinic/appointments', '/clinic/services', '/clinic/content', '/clinic/analytics', '/clinic/settings']) {
   assert.ok(app.includes(route), `Missing route contract: ${route}`)
