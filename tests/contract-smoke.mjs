@@ -34,6 +34,7 @@ assert.match(rules, /allow create: if false;/)
 assert.match(rules, /allow update, delete: if false;/)
 assert.match(rules, /match \/users\/{uid}/)
 assert.match(rules, /match \/\{document=\*\*\}/)
+assert.match(rules, /function memberOf\(clinicId\).*membership\(\)\.role == 'owner'/)
 assert.match(rules, /allow read, write: if false;/)
 assert.match(rules, /currency\.matches\('\^\[A-Z\]\{3\}\$'/)
 
