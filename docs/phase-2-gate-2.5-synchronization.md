@@ -10,7 +10,7 @@ Clinic-side data changes must propagate correctly to the public interface.
 - The public clinic page resolves its clinic by slug.
 - The public data layer subscribes to the clinic document, active services, and active FAQs with Firestore realtime listeners.
 - The UI updates from Firestore snapshots rather than maintaining a demo copy in React state.
-- Public booking writes to the same clinic-owned appointment collection.
+- Public booking writes to the same clinic-owned appointment collection through the trusted Phase 3 `createPublicAppointment` function; Phase 2 only establishes persistence/synchronization, while conflict/lifecycle enforcement belongs to Phase 3.
 
 ## Verification still required
 1. modify clinic configuration in Firestore and observe public update;
