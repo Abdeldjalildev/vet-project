@@ -118,15 +118,9 @@ The repository owner subsequently synchronized the lockfile with `npm ci` and ve
 
 Firebase Console project selection and Web App configuration remain part of the external runtime verification required by the later Phase 1 gates; they are not inferred from repository inspection.
 
-## 5. Important Lockfile Note
+## 5. Lockfile and verification note
 
-The repository currently contains an existing `package-lock.json`.
-
-The GitHub-only implementation updated `package.json`, but the lockfile has not been regenerated because a package-manager execution environment is not available through the repository operation itself.
-
-Therefore **do not use `npm ci` as evidence for G1.1 yet**.
-
-The local owner-side dependency synchronization must regenerate the lockfile using the repository's existing npm workflow.
+The repository contains a synchronized `package-lock.json` matching the Firebase dependency declaration. The earlier GitHub-only scaffold intentionally left dependency synchronization pending; the subsequent owner-side `npm ci` resolved that dependency state and the production Vite build was verified successfully.
 
 ## 6. Gate Decision
 
