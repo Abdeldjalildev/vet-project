@@ -1,8 +1,27 @@
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { localized } from '../lib/clinicData'
+import { trackPublicEvent } from '../lib/analytics'
 
-export default function Services({ services = [] }) {
+export default function Services({ services = [], clinicId }) {
   const { t, i18n } = useTranslation()
+  const viewedServices = useRef(new Set())
+
+  useEffect(() => {
+    const elements = document.querySelectorAll('[data-analytics-service-id]')
+    if (!('IntersectionObserver' in window)) return undefined
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        const serviceId = entry.target.dataset.analyticsServiceId
+        if (!serviceId || viewedServices.current.has(serviceId)) return
+        viewedServices.current.add(serviceId)
+        trackPublicEvent({ clinicId: entry.target.dataset.analyticsClinicId, eventType: 'service_view', page: 'services', serviceId })
+      })
+    }, { threshold: 0.35 })
+    elements.forEach((element) => observer.observe(element))
+    return () => observer.disconnect()
+  }, [services])
 
   return (
     <section id="services" className="border-y border-slate-100 bg-white px-8 py-20 transition-colors duration-300 dark:border-gray-800/60 dark:bg-gray-950">
@@ -25,6 +44,8 @@ export default function Services({ services = [] }) {
             {services.map((service) => (
               <article
                 key={service.serviceId}
+                data-analytics-service-id={service.serviceId}
+                data-analytics-clinic-id={clinicId}
                 className="group rounded-2xl border border-slate-100 bg-slate-50 p-6 transition-all duration-300 hover:shadow-xl dark:border-gray-800 dark:bg-gray-900 dark:hover:shadow-none"
               >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-xl font-bold text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
