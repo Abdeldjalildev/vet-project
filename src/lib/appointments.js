@@ -36,8 +36,10 @@ export const listClinicAppointments = async (clinicId) => {
     ),
   )
 
-  return snapshot.docs.map((document) => ({
-    appointmentId: document.id,
-    ...document.data(),
-  }))
+  return snapshot.docs
+    .map((document) => ({
+      appointmentId: document.id,
+      ...document.data(),
+    }))
+    .sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`))
 }
