@@ -5,11 +5,17 @@ import { toast } from 'react-hot-toast'
 import { createPublicAppointment } from '../lib/appointments'
 import { localized } from '../lib/clinicData'
 import { getTodayDate, validateAppointmentInput } from '../lib/appointmentValidation'
+import { trackPublicEvent } from '../lib/analytics'
 
 const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition-all focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:border-gray-700/80 dark:bg-gray-800 dark:text-white'
 
 export default function BookingForm({ clinicId, services = [] }) {
   const { t, i18n } = useTranslation()
+
+  useState(() => {
+    trackPublicEvent({ clinicId, eventType: 'booking_started', page: 'booking' })
+    return null
+  })
   const [formData, setFormData] = useState({
     petName: '',
     petType: '',
@@ -41,6 +47,7 @@ export default function BookingForm({ clinicId, services = [] }) {
 
     try {
       await createPublicAppointment(clinicId, validation.value)
+      await trackPublicEvent({ clinicId, eventType: 'booking_completed', page: 'booking' })
       toast.success(t('successMessage'))
       setFormData({
         petName: '',
