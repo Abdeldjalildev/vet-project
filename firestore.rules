@@ -29,7 +29,70 @@ service cloud.firestore {
 
     function validHttpsUrl(value) {
       return value is string &&
-        (value == '' || value.matches('^https://[^\\s]+
+        (value == '' || value.matches('^https://[^\\s]+$'));
+    }
+
+    function validLocalized(value) {
+      return value is map &&
+        value.keys().hasOnly(['ar', 'en', 'fr']) &&
+        value.ar is string &&
+        value.en is string &&
+        value.fr is string;
+    }
+
+    function validBranding() {
+      return request.resource.data.branding is map &&
+        request.resource.data.branding.keys().hasOnly(['primaryColor', 'accentColor']) &&
+        request.resource.data.branding.primaryColor is string &&
+        request.resource.data.branding.accentColor is string &&
+        request.resource.data.branding.primaryColor.matches('^#[0-9A-Fa-f]{6}$') &&
+        request.resource.data.branding.accentColor.matches('^#[0-9A-Fa-f]{6}$');
+    }
+
+    function validClinicPublicConfig() {
+      return validLocalized(request.resource.data.name) &&
+        validLocalized(request.resource.data.description) &&
+        validHttpsUrl(request.resource.data.logoUrl) &&
+        validLocalized(request.resource.data.contact.address) &&
+        request.resource.data.contact.phone is string &&
+        request.resource.data.contact.email is string &&
+        (request.resource.data.contact.email == '' ||
+          request.resource.data.contact.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')) &&
+        request.resource.data.openingHours is map &&
+        validLocalized(request.resource.data.emergencyInformation) &&
+        validBranding() &&
+        request.resource.data.socialLinks is map &&
+        request.resource.data.socialLinks.keys().hasOnly([
+          'facebook',
+          'instagram',
+          'tiktok',
+          'youtube',
+          'whatsapp',
+          'website'
+        ]) &&
+        validHttpsUrl(request.resource.data.socialLinks.facebook) &&
+        validHttpsUrl(request.resource.data.socialLinks.instagram) &&
+        validHttpsUrl(request.resource.data.socialLinks.tiktok) &&
+        validHttpsUrl(request.resource.data.socialLinks.youtube) &&
+        validHttpsUrl(request.resource.data.socialLinks.whatsapp) &&
+        validHttpsUrl(request.resource.data.socialLinks.website);
+    }
+
+    function clinicUpdateFieldsAreAllowed() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'name',
+        'description',
+        'logoUrl',
+        'branding',
+        'contact',
+        'openingHours',
+        'emergencyInformation',
+        'hero',
+        'about',
+        'footer',
+        'socialLinks'
+      ]);
+    }
 
     function serviceFieldsAreAllowed() {
       return request.resource.data.keys().hasOnly([
@@ -120,564 +183,11 @@ service cloud.firestore {
         allow create: if memberOf(clinicId) &&
           ownerOrAdmin() &&
           faqFieldsAreAllowed();
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed();
-        allow delete: if memberOf(clinicId) && ownerOrAdmin();
-      }
-
-      match /appointments/{appointmentId} {
-        allow read: if memberOf(clinicId);
-        allow create: if false;
-        allow update, delete: if false;
-      }
-
-      match /analyticsEvents/{eventId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-
-      match /analyticsAggregates/{aggregateId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-    }
-
-    match /users/{uid} {
-      allow read: if signedIn() && request.auth.uid == uid;
-      allow create, delete: if false;
-      allow update: if false;
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-));
-    }
-
-    function validLocalized(value) {
-      return value is map &&
-        value.keys().hasOnly(['ar', 'en', 'fr']) &&
-        value.ar is string &&
-        value.en is string &&
-        value.fr is string;
-    }
-
-    function validBranding() {
-      return request.resource.data.branding is map &&
-        request.resource.data.branding.keys().hasOnly(['primaryColor', 'accentColor']) &&
-        request.resource.data.branding.primaryColor is string &&
-        request.resource.data.branding.accentColor is string &&
-        request.resource.data.branding.primaryColor.matches('^#[0-9A-Fa-f]{6}
-
-    function serviceFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'name',
-        'description',
-        'icon',
-        'price',
-        'currency',
-        'order',
-        'active'
-      ]);
-    }
-
-    function faqFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'question',
-        'answer',
-        'order',
-        'active'
-      ]);
-    }
-
-    function validServiceValue() {
-      return request.resource.data.price is number &&
-        request.resource.data.price >= 0 &&
-        request.resource.data.currency is string &&
-        request.resource.data.currency.matches('^[A-Z]{3}$');
-    }
-
-    function existingServiceValueIsValidOrAbsent() {
-      return !('price' in request.resource.data) || validServiceValue();
-    }
-
-    match /clinics/{clinicId} {
-      allow read: if (
-        resource.data.public == true &&
-        resource.data.active == true
-      ) || memberOf(clinicId);
-
-      allow create: if false;
-
-      allow update: if memberOf(clinicId) &&
-        ownerOrAdmin() &&
-        clinicUpdateFieldsAreAllowed() &&
-        request.resource.data.keys().hasOnly([
-          'slug',
-          'public',
-          'active',
-          'name',
-          'logoUrl',
-          'branding',
-          'contact',
-          'openingHours',
-          'emergencyInformation',
-          'hero',
-          'about',
-          'footer',
-          'socialLinks'
-        ]);
-
-      allow delete: if false;
-
-      match /services/{serviceId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          validServiceValue();
 
         allow update: if memberOf(clinicId) &&
           ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          existingServiceValueIsValidOrAbsent();
-
-        allow delete: if false;
-      }
-
-      match /faqs/{faqId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
           faqFieldsAreAllowed();
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed();
-        allow delete: if memberOf(clinicId) && ownerOrAdmin();
-      }
 
-      match /appointments/{appointmentId} {
-        allow read: if memberOf(clinicId);
-        allow create: if false;
-        allow update, delete: if false;
-      }
-
-      match /analyticsEvents/{eventId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-
-      match /analyticsAggregates/{aggregateId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-    }
-
-    match /users/{uid} {
-      allow read: if signedIn() && request.auth.uid == uid;
-      allow create, delete: if false;
-      allow update: if false;
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-) &&
-        request.resource.data.branding.accentColor.matches('^#[0-9A-Fa-f]{6}
-
-    function serviceFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'name',
-        'description',
-        'icon',
-        'price',
-        'currency',
-        'order',
-        'active'
-      ]);
-    }
-
-    function faqFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'question',
-        'answer',
-        'order',
-        'active'
-      ]);
-    }
-
-    function validServiceValue() {
-      return request.resource.data.price is number &&
-        request.resource.data.price >= 0 &&
-        request.resource.data.currency is string &&
-        request.resource.data.currency.matches('^[A-Z]{3}$');
-    }
-
-    function existingServiceValueIsValidOrAbsent() {
-      return !('price' in request.resource.data) || validServiceValue();
-    }
-
-    match /clinics/{clinicId} {
-      allow read: if (
-        resource.data.public == true &&
-        resource.data.active == true
-      ) || memberOf(clinicId);
-
-      allow create: if false;
-
-      allow update: if memberOf(clinicId) &&
-        ownerOrAdmin() &&
-        clinicUpdateFieldsAreAllowed() &&
-        request.resource.data.keys().hasOnly([
-          'slug',
-          'public',
-          'active',
-          'name',
-          'logoUrl',
-          'branding',
-          'contact',
-          'openingHours',
-          'emergencyInformation',
-          'hero',
-          'about',
-          'footer',
-          'socialLinks'
-        ]);
-
-      allow delete: if false;
-
-      match /services/{serviceId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          validServiceValue();
-
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          existingServiceValueIsValidOrAbsent();
-
-        allow delete: if false;
-      }
-
-      match /faqs/{faqId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed();
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed();
-        allow delete: if memberOf(clinicId) && ownerOrAdmin();
-      }
-
-      match /appointments/{appointmentId} {
-        allow read: if memberOf(clinicId);
-        allow create: if false;
-        allow update, delete: if false;
-      }
-
-      match /analyticsEvents/{eventId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-
-      match /analyticsAggregates/{aggregateId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-    }
-
-    match /users/{uid} {
-      allow read: if signedIn() && request.auth.uid == uid;
-      allow create, delete: if false;
-      allow update: if false;
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-);
-    }
-
-    function validClinicPublicConfig() {
-      return validLocalized(request.resource.data.name) &&
-        validLocalized(request.resource.data.description) &&
-        validHttpsUrl(request.resource.data.logoUrl) &&
-        validLocalized(request.resource.data.contact.address) &&
-        request.resource.data.contact.phone is string &&
-        request.resource.data.contact.email is string &&
-        (request.resource.data.contact.email == '' ||
-          request.resource.data.contact.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+
-
-    function serviceFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'name',
-        'description',
-        'icon',
-        'price',
-        'currency',
-        'order',
-        'active'
-      ]);
-    }
-
-    function faqFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'question',
-        'answer',
-        'order',
-        'active'
-      ]);
-    }
-
-    function validServiceValue() {
-      return request.resource.data.price is number &&
-        request.resource.data.price >= 0 &&
-        request.resource.data.currency is string &&
-        request.resource.data.currency.matches('^[A-Z]{3}$');
-    }
-
-    function existingServiceValueIsValidOrAbsent() {
-      return !('price' in request.resource.data) || validServiceValue();
-    }
-
-    match /clinics/{clinicId} {
-      allow read: if (
-        resource.data.public == true &&
-        resource.data.active == true
-      ) || memberOf(clinicId);
-
-      allow create: if false;
-
-      allow update: if memberOf(clinicId) &&
-        ownerOrAdmin() &&
-        clinicUpdateFieldsAreAllowed() &&
-        request.resource.data.keys().hasOnly([
-          'slug',
-          'public',
-          'active',
-          'name',
-          'logoUrl',
-          'branding',
-          'contact',
-          'openingHours',
-          'emergencyInformation',
-          'hero',
-          'about',
-          'footer',
-          'socialLinks'
-        ]);
-
-      allow delete: if false;
-
-      match /services/{serviceId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          validServiceValue();
-
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          existingServiceValueIsValidOrAbsent();
-
-        allow delete: if false;
-      }
-
-      match /faqs/{faqId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed();
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed();
-        allow delete: if memberOf(clinicId) && ownerOrAdmin();
-      }
-
-      match /appointments/{appointmentId} {
-        allow read: if memberOf(clinicId);
-        allow create: if false;
-        allow update, delete: if false;
-      }
-
-      match /analyticsEvents/{eventId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-
-      match /analyticsAggregates/{aggregateId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-    }
-
-    match /users/{uid} {
-      allow read: if signedIn() && request.auth.uid == uid;
-      allow create, delete: if false;
-      allow update: if false;
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-)) &&
-        request.resource.data.openingHours is map &&
-        validLocalized(request.resource.data.emergencyInformation) &&
-        validBranding() &&
-        request.resource.data.socialLinks is map &&
-        request.resource.data.socialLinks.keys().hasOnly([
-          'facebook',
-          'instagram',
-          'tiktok',
-          'youtube',
-          'whatsapp',
-          'website'
-        ]) &&
-        validHttpsUrl(request.resource.data.socialLinks.facebook) &&
-        validHttpsUrl(request.resource.data.socialLinks.instagram) &&
-        validHttpsUrl(request.resource.data.socialLinks.tiktok) &&
-        validHttpsUrl(request.resource.data.socialLinks.youtube) &&
-        validHttpsUrl(request.resource.data.socialLinks.whatsapp) &&
-        validHttpsUrl(request.resource.data.socialLinks.website);
-    }
-
-    function clinicUpdateFieldsAreAllowed() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        'name',
-        'description',
-        'logoUrl',
-        'branding',
-        'contact',
-        'openingHours',
-        'emergencyInformation',
-        'hero',
-        'about',
-        'footer',
-        'socialLinks'
-      ]);
-    }
-
-    function serviceFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'name',
-        'description',
-        'icon',
-        'price',
-        'currency',
-        'order',
-        'active'
-      ]);
-    }
-
-    function faqFieldsAreAllowed() {
-      return request.resource.data.keys().hasOnly([
-        'question',
-        'answer',
-        'order',
-        'active'
-      ]);
-    }
-
-    function validServiceValue() {
-      return request.resource.data.price is number &&
-        request.resource.data.price >= 0 &&
-        request.resource.data.currency is string &&
-        request.resource.data.currency.matches('^[A-Z]{3}$');
-    }
-
-    function existingServiceValueIsValidOrAbsent() {
-      return !('price' in request.resource.data) || validServiceValue();
-    }
-
-    match /clinics/{clinicId} {
-      allow read: if (
-        resource.data.public == true &&
-        resource.data.active == true
-      ) || memberOf(clinicId);
-
-      allow create: if false;
-
-      allow update: if memberOf(clinicId) &&
-        ownerOrAdmin() &&
-        clinicUpdateFieldsAreAllowed() &&
-        request.resource.data.keys().hasOnly([
-          'slug',
-          'public',
-          'active',
-          'name',
-          'logoUrl',
-          'branding',
-          'contact',
-          'openingHours',
-          'emergencyInformation',
-          'hero',
-          'about',
-          'footer',
-          'socialLinks'
-        ]);
-
-      allow delete: if false;
-
-      match /services/{serviceId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          validServiceValue();
-
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          serviceFieldsAreAllowed() &&
-          existingServiceValueIsValidOrAbsent();
-
-        allow delete: if false;
-      }
-
-      match /faqs/{faqId} {
-        allow read: if (
-          resource.data.active == true
-        ) || memberOf(clinicId);
-
-        allow create: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed();
-        allow update: if memberOf(clinicId) &&
-          ownerOrAdmin() &&
-          faqFieldsAreAllowed();
         allow delete: if memberOf(clinicId) && ownerOrAdmin();
       }
 
