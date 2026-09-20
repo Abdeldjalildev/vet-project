@@ -211,5 +211,6 @@ export default function ClinicServicesAdmin({ clinicId }) {
 }
 
 function State({ message, retry }) {
+  const { t } = useTranslation()
   return <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-gray-700 dark:text-gray-400" >{message}{retry && <button type="button" onClick={retry} className="mt-4 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white">{t('retry')}</button>}</div>
 }
