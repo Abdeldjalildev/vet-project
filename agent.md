@@ -30,6 +30,9 @@ A repository-level deep audit of G1.1–G1.5 was completed against this contract
 
 Phase 2 implementation is complete on GitHub. Runtime verification is intentionally deferred so Phase 1 and Phase 2 can be tested together in the intended Firebase project.
 
+### Phase 2 deep-audit repair record — 2026-09-20
+A repository-level deep audit of G2.1–G2.5 was completed against this contract, the Phase 0 architecture freeze, and the repaired Phase 1 Firestore boundary. The audit found and corrected stale G2.4/G2.5/completion documentation that still described direct client appointment creation after the trusted Phase 3 function had become authoritative. Public clinic lookup was also tightened from scanning all public/active clinics and filtering by slug in memory to querying the requested slug together with the required public/active constraints. No new product scope was introduced; runtime verification remains pending.
+
 
 ### Phase 3 — Real Appointment System
 - G3.1 Appointment Model — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
