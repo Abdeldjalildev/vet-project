@@ -14,7 +14,7 @@ Membership must have `status: "active"` and a clinicId.
 
 ## Implemented controls
 - Admin shell resolves membership before exposing clinic data.
-- Firestore rules authorize using authenticated UID and membership.
+- Firestore rules authorize using authenticated UID and active membership with an accepted owner/admin role.
 - Clinic slug and clinicId are never treated as credentials.
 - `transitionAppointment` verifies authentication, active membership, role, and exact clinic match.
 - Direct client appointment lifecycle writes are denied.
