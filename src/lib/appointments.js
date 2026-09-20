@@ -32,6 +32,7 @@ export const listClinicAppointments = async (clinicId) => {
     query(
       clinicAppointmentsRef(clinicId),
       orderBy('date', 'desc'),
+      orderBy('time', 'desc'),
       limit(100),
     ),
   )
