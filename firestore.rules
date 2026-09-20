@@ -110,10 +110,12 @@ service cloud.firestore {
 
         allow create: if memberOf(clinicId) &&
           ownerOrAdmin() &&
+          serviceFieldsAreAllowed() &&
           validServiceValue();
 
         allow update: if memberOf(clinicId) &&
           ownerOrAdmin() &&
+          serviceFieldsAreAllowed() &&
           existingServiceValueIsValidOrAbsent();
 
         allow delete: if memberOf(clinicId) && ownerOrAdmin();
@@ -124,7 +126,13 @@ service cloud.firestore {
           resource.data.active == true
         ) || memberOf(clinicId);
 
-        allow create, update, delete: if memberOf(clinicId) && ownerOrAdmin();
+        allow create: if memberOf(clinicId) &&
+          ownerOrAdmin() &&
+          faqFieldsAreAllowed();
+        allow update: if memberOf(clinicId) &&
+          ownerOrAdmin() &&
+          faqFieldsAreAllowed();
+        allow delete: if memberOf(clinicId) && ownerOrAdmin();
       }
 
       match /appointments/{appointmentId} {
