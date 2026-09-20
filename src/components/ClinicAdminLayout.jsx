@@ -97,13 +97,25 @@ export default function ClinicAdminLayout({ section, children }) {
               <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">VetLife Clinic</p>
               <h2 className="mt-1 text-xl font-black">{t(NAV_ITEMS.find(([key]) => key === section)?.[1] || 'adminNavDashboard')}</h2>
             </div>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 dark:border-gray-700 dark:text-gray-200 lg:hidden"
-            >
-              {t('signOut')}
-            </button>
+            <div className="flex items-center gap-3">
+              <select
+                value={i18n.language.split('-')[0]}
+                onChange={(event) => i18n.changeLanguage(event.target.value)}
+                aria-label={t('language')}
+                className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm font-semibold dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+              >
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+              </select>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 dark:border-gray-700 dark:text-gray-200 lg:hidden"
+              >
+                {t('signOut')}
+              </button>
+            </div>
           </div>
           <nav className="mt-4 flex gap-2 overflow-x-auto lg:hidden" aria-label={t('adminNavigation')}>
             {NAV_ITEMS.map(([key, label]) => (
