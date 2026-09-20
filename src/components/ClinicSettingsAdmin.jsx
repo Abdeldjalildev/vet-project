@@ -73,7 +73,7 @@ export default function ClinicSettingsAdmin({ clinicId, clinic }) {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
                 <label key={day} className="text-xs font-bold uppercase text-slate-500">
-                  {day}
+                  {t(`day_${day}`)}
                   <input value={hours[day] || ''} onChange={(e) => setHours((v) => ({ ...v, [day]: e.target.value }))} placeholder="09:00 - 17:00" className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm font-normal dark:border-gray-700 dark:bg-gray-950" />
                 </label>
               ))}
