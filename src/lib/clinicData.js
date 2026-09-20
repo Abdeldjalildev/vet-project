@@ -13,10 +13,16 @@ export const localized = (value, language, fallback = 'en') => {
 }
 
 export const getPublicClinicBySlug = async (slug) => {
-  const snapshot = await getDocs(query(clinicsRef, where('public', '==', true)))
+  const snapshot = await getDocs(
+    query(
+      clinicsRef,
+      where('public', '==', true),
+      where('active', '==', true),
+    ),
+  )
   const clinic = snapshot.docs
     .map((document) => ({ clinicId: document.id, ...document.data() }))
-    .find((item) => item.slug === slug && item.active !== false)
+    .find((item) => item.slug === slug)
 
   if (!clinic) throw new Error('CLINIC_NOT_FOUND')
   return clinic
