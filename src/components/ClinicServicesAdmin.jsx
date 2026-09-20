@@ -12,6 +12,8 @@ const EMPTY = {
   name: { ar: '', en: '', fr: '' },
   description: { ar: '', en: '', fr: '' },
   icon: '🩺',
+  price: 0,
+  currency: 'DZD',
   order: 0,
   active: true,
 }
@@ -76,6 +78,8 @@ export default function ClinicServicesAdmin({ clinicId }) {
         fr: service.description?.fr || '',
       },
       icon: service.icon || '🩺',
+      price: Number(service.price || 0),
+      currency: service.currency || 'DZD',
       order: Number(service.order || 0),
       active: service.active !== false,
     })
@@ -144,6 +148,14 @@ export default function ClinicServicesAdmin({ clinicId }) {
               <input value={form.icon} onChange={(event) => setForm((current) => ({ ...current, icon: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-normal dark:border-gray-700 dark:bg-gray-950" />
             </label>
             <label className="text-sm font-bold">
+              {t('servicePrice')}
+              <input type="number" min="0" step="0.01" value={form.price} onChange={(event) => setForm((current) => ({ ...current, price: Number(event.target.value) }))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-normal dark:border-gray-700 dark:bg-gray-950" />
+            </label>
+            <label className="text-sm font-bold">
+              {t('serviceCurrency')}
+              <input maxLength="3" value={form.currency} onChange={(event) => setForm((current) => ({ ...current, currency: event.target.value.toUpperCase() }))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-normal uppercase dark:border-gray-700 dark:bg-gray-950" />
+            </label>
+            <label className="text-sm font-bold">
               {t('serviceOrder')}
               <input type="number" value={form.order} onChange={(event) => setForm((current) => ({ ...current, order: Number(event.target.value) }))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-normal dark:border-gray-700 dark:bg-gray-950" />
             </label>
@@ -180,7 +192,7 @@ export default function ClinicServicesAdmin({ clinicId }) {
                     <p className="font-black">{service.name?.en || service.name?.ar || service.name?.fr}</p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">{service.description?.en || service.description?.ar || service.description?.fr}</p>
                     <p className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-                      {service.active === false ? t('serviceInactive') : t('serviceActive')} · {t('serviceOrder')}: {service.order ?? 0}
+                      {service.active === false ? t('serviceInactive') : t('serviceActive')} · {service.price ?? 0} {service.currency || 'DZD'} · {t('serviceOrder')}: {service.order ?? 0}
                     </p>
                   </div>
                 </div>
