@@ -84,9 +84,10 @@ export default function PublicClinicPage({ clinicSlug }) {
         '--clinic-accent': clinic.branding?.accentColor || '#10b981',
       }}
     >
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-white focus:px-4 focus:py-3 focus:font-bold focus:shadow-xl dark:focus:bg-gray-900">{t('skipToContent')}</a>
       <Toaster position="top-center" reverseOrder={false} />
       <Navbar clinic={clinic} />
-      <main>
+      <main id="main-content">
         <Hero clinic={clinic} />
         <Services clinicId={clinic.clinicId} services={services} />
         <About clinic={clinic} />
