@@ -15,7 +15,7 @@ Footer-managed content includes:
 - multilingual footer description;
 - multilingual copyright text.
 
-The public Footer consumes these values from the clinic document. Emergency information is also exposed through the managed clinic profile.
+The public Footer consumes these values from the clinic document. Supported social/website destinations are constrained to HTTPS URLs (or empty values) at the Firestore boundary, so arbitrary URL schemes are not accepted. Emergency information is also exposed through the managed clinic profile.
 
 No arbitrary HTML or custom page-builder content is introduced.
 
