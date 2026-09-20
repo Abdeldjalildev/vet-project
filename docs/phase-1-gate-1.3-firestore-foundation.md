@@ -2,13 +2,13 @@
 
 **Gate:** G1.3 — Firestore Foundation  
 **Phase:** Phase 1 — Firebase Foundation  
-**Status:** IMPLEMENTED — EXTERNAL FIRESTORE CONFIGURATION VERIFICATION REQUIRED  
+**Status:** IMPLEMENTED — EXTERNAL FIRESTORE CONFIGURATION AND RUNTIME VERIFICATION REQUIRED  
 **Repository:** `Abdeldjalildev/vet-project`  
 **Depends on:** G1.2 architecture boundary; Phase 0 domain/security contracts
 
 ## 1. Scope
 
-G1.3 establishes the browser Firestore client and the approved Phase 0 collection-path contract. It does not implement Security Rules, public booking, appointment writes, service CRUD, or analytics collection.
+G1.3 establishes the browser Firestore client and the approved Phase 0 collection/document contract. It does not implement Security Rules, public booking, appointment writes, service CRUD, or analytics collection.
 
 ## 2. Implemented
 
@@ -16,9 +16,9 @@ G1.3 establishes the browser Firestore client and the approved Phase 0 collectio
 
 Created `src/lib/firestore.js` using the modular Firebase SDK and the existing Firebase App.
 
-### Approved paths
+### Centralized references
 
-The repository now has centralized path builders for:
+The data layer exposes centralized Firestore references for:
 
 - `clinics/{clinicId}`
 - `users/{uid}`
@@ -28,7 +28,7 @@ The repository now has centralized path builders for:
 - `clinics/{clinicId}/analyticsEvents/{eventId}`
 - `clinics/{clinicId}/analyticsAggregates/{aggregateId}`
 
-The path builders are pure and do not perform reads or writes. This keeps the data contract separate from presentation components and avoids premature business operations.
+The reference helpers do not perform application reads or writes. They establish one application/data-layer boundary for later gates and keep Firestore path construction out of presentation components.
 
 ## 3. Security Boundary
 
