@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { toast } from 'react-hot-toast'
@@ -12,10 +12,9 @@ const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3
 export default function BookingForm({ clinicId, services = [] }) {
   const { t, i18n } = useTranslation()
 
-  useState(() => {
+  useEffect(() => {
     trackPublicEvent({ clinicId, eventType: 'booking_started', page: 'booking' })
-    return null
-  })
+  }, [clinicId])
   const [formData, setFormData] = useState({
     petName: '',
     petType: '',
