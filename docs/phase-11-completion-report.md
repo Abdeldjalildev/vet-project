@@ -29,3 +29,7 @@ The planned combined runtime pass must provide concrete evidence before any pend
 
 ## Remaining release-hardening boundary
 `functions/package-lock.json` is not present. CI therefore installs Functions dependencies with `npm install --ignore-scripts --no-package-lock`, which validates the dependency tree but does not provide the reproducibility of a committed Functions lockfile. This remains a visible release-hardening item and is not being treated as solved by the Phase 11 audit.
+
+
+### Final CI maintenance repair
+The GitHub Actions workflow was migrated to Node 24-compatible v5 action runtimes while retaining Node 20 as the project runtime required by Cloud Functions.
