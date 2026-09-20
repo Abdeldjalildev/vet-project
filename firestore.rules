@@ -114,7 +114,7 @@ service cloud.firestore {
 
       match /appointments/{appointmentId} {
         allow read: if memberOf(clinicId);
-        allow create: if validPublicAppointment(clinicId);
+        // Public booking is validated atomically by the trusted Cloud Function.\n        allow create: if false;
         // Appointment writes go through trusted Cloud Functions so lifecycle and conflict rules cannot be bypassed.\n        allow update, delete: if false;
       }
 
