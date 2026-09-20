@@ -1,0 +1,62 @@
+import i18n from './config'
+
+const translations = {
+  ar: {
+    analyticsTitle: 'تحليلات العيادة',
+    analyticsLast30Days: 'ملخص آخر 30 يوماً',
+    analyticsLoading: 'جارٍ تحميل التحليلات…',
+    analyticsLoadError: 'تعذر تحميل بيانات التحليلات.',
+    analyticsNoData: 'لا توجد بيانات تحليلية كافية بعد.',
+    analyticsVisitors: 'الزوار الفريدون',
+    analyticsPageViews: 'مشاهدات الصفحات',
+    analyticsSessions: 'الجلسات',
+    analyticsBookings: 'الحجوزات المكتملة',
+    analyticsConversion: 'معدل التحويل',
+    analyticsPopularPages: 'الصفحات الأكثر مشاهدة',
+    analyticsPopularServices: 'الخدمات الأكثر مشاهدة',
+    analyticsPage_home: 'الرئيسية',
+    analyticsPage_services: 'الخدمات',
+    analyticsPage_faq: 'الأسئلة الشائعة',
+    analyticsPage_booking: 'الحجز',
+  },
+  en: {
+    analyticsTitle: 'Clinic Analytics',
+    analyticsLast30Days: 'Summary for the last 30 days',
+    analyticsLoading: 'Loading analytics…',
+    analyticsLoadError: 'Analytics data could not be loaded.',
+    analyticsNoData: 'There is not enough analytics data yet.',
+    analyticsVisitors: 'Unique visitors',
+    analyticsPageViews: 'Page views',
+    analyticsSessions: 'Sessions',
+    analyticsBookings: 'Completed bookings',
+    analyticsConversion: 'Conversion rate',
+    analyticsPopularPages: 'Popular pages',
+    analyticsPopularServices: 'Popular services',
+    analyticsPage_home: 'Home',
+    analyticsPage_services: 'Services',
+    analyticsPage_faq: 'FAQ',
+    analyticsPage_booking: 'Booking',
+  },
+  fr: {
+    analyticsTitle: 'Analyses de la clinique',
+    analyticsLast30Days: 'Résumé des 30 derniers jours',
+    analyticsLoading: 'Chargement des analyses…',
+    analyticsLoadError: 'Impossible de charger les données analytiques.',
+    analyticsNoData: 'Pas encore assez de données analytiques.',
+    analyticsVisitors: 'Visiteurs uniques',
+    analyticsPageViews: 'Vues de pages',
+    analyticsSessions: 'Sessions',
+    analyticsBookings: 'Réservations terminées',
+    analyticsConversion: 'Taux de conversion',
+    analyticsPopularPages: 'Pages populaires',
+    analyticsPopularServices: 'Services populaires',
+    analyticsPage_home: 'Accueil',
+    analyticsPage_services: 'Services',
+    analyticsPage_faq: 'FAQ',
+    analyticsPage_booking: 'Réservation',
+  },
+}
+
+for (const [language, values] of Object.entries(translations)) {
+  i18n.addResourceBundle(language, 'translation', values, true, true)
+}
