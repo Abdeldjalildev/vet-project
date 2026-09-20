@@ -27,7 +27,13 @@ export default function BookingForm({ clinicId, services = [] }) {
     setFormData((previous) => ({ ...previous, [name]: value }))
   }
 
-  const getToday = () => new Date().toISOString().slice(0, 10)
+  const getToday = () => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
