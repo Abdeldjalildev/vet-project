@@ -118,6 +118,9 @@ Phase 9 implementation is complete on GitHub. Runtime/browser verification remai
 
 ---
 
+### Phase 9 deep-audit repair record — 2026-09-20
+A deep repository audit of G9.1–G9.5 was completed against the production UX/reliability, accessibility, responsive, and acceptance contracts. Two substantive reliability/UX issues were repaired: a successful public appointment could be reported as a booking failure if the subsequent non-critical `booking_completed` analytics call failed; analytics delivery is now best-effort after the appointment has been durably created. Recoverable admin data-loading failures lacked a retry action in the admin shell and appointments/services/FAQ sections; retry actions were added. Route-level authentication loading and missing-public-slug messages were also moved into the Phase 9 i18n resource instead of hard-coded English. Existing accessibility semantics, responsive structure, error-boundary behavior, and bounded Phase 9 scope were reviewed and retained. Runtime/browser/device accessibility and responsive verification remain pending.
+
 ### Phase 10 — Security Hardening
 - G10.1 Authentication Security — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
 - G10.2 Authorization — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
