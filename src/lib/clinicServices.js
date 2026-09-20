@@ -1,4 +1,4 @@
-import { addDoc, deleteDoc, doc, getDocs, orderBy, query, query as firestoreQuery, updateDoc, where } from 'firebase/firestore'
+import { addDoc, deleteDoc, doc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore'
 import { clinicAppointmentsRef, clinicServicesRef, firestore } from './firestore'
 
 const normalizeLocalized = (value) => ({
