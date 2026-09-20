@@ -46,6 +46,9 @@ Phase 3 implementation is complete on GitHub. Runtime verification is intentiona
 ### Phase 3 deep-audit repair record — 2026-09-20
 A repository-level deep audit of G3.1–G3.5 was completed against this contract, the Phase 0 appointment/lifecycle contract, and the repaired Phase 1–2 boundaries. The audit found a real server-validation defect in the appointment email regex and overly permissive coercion of optional ownerEmail/notes types; both were corrected. The audit also reconciled Phase 3 documentation with later Phase 8 extensions to the trusted lifecycle function without changing the Phase 3 state-machine contract. Firestore transaction ordering and conflict protection were reviewed against current Firebase transaction semantics; runtime concurrency evidence remains pending.
 
+### Phase 4 deep-audit repair record — 2026-09-20
+A repository-level deep audit of G4.1–G4.5 was completed against the Phase 0 routing/security contracts and the repaired Phase 1–3 boundaries. The audit found two data-integrity/behavior issues: service deletion was performed by a client-side check followed by a direct delete, creating a race with trusted appointment creation; and the dashboard labeled all pending/confirmed records as upcoming without comparing their date/time to the current local time. Both were repaired. Dashboard appointment ordering now includes date and time, with a dedicated Firestore index. Service deletion is now a trusted transaction-backed operation and direct client deletion is denied by Rules. Runtime verification remains pending.
+
 ### Phase 4 — Clinic Admin Dashboard
 - G4.1 Admin Shell — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
 - G4.2 Dashboard Overview — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
