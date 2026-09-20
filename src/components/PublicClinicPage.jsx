@@ -48,12 +48,12 @@ export default function PublicClinicPage({ clinicSlug }) {
           onError: (error) => {
             if (cancelled) return
             setLoadError(error.message)
-            setLoadError(error.message)
-          setStatus(error.message === 'CLINIC_NOT_FOUND' ? 'not-found' : 'error')
+            setStatus(error.message === 'CLINIC_NOT_FOUND' ? 'not-found' : 'error')
           },
         })
       } catch (error) {
         if (!cancelled) {
+          setLoadError(error.message)
           setStatus(error.message === 'CLINIC_NOT_FOUND' ? 'not-found' : 'error')
         }
       }
