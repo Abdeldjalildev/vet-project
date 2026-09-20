@@ -10,6 +10,7 @@ import Faq from './Faq'
 import Footer from './Footer'
 import BookingForm from './BookingForm'
 import { Toaster } from 'react-hot-toast'
+import { trackPublicEvent, trackSessionStartOnce } from '../lib/analytics'
 
 export default function PublicClinicPage({ clinicSlug }) {
   const { i18n } = useTranslation()
@@ -28,6 +29,8 @@ export default function PublicClinicPage({ clinicSlug }) {
         const publicClinic = await getPublicClinicBySlug(clinicSlug)
         if (cancelled) return
 
+        trackSessionStartOnce({ clinicId: publicClinic.clinicId, page: 'home' })
+        trackPublicEvent({ clinicId: publicClinic.clinicId, eventType: 'page_view', page: 'home' })
         unsubscribe = subscribePublicClinic(publicClinic.clinicId, {
           onClinic: (nextClinic) => {
             if (cancelled) return
