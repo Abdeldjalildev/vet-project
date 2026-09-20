@@ -15,7 +15,7 @@ const NAV_ITEMS = [
 
 export default function ClinicAdminLayout({ section, children }) {
   const { user, signOut } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [membership, setMembership] = useState(null)
   const [clinic, setClinic] = useState(null)
   const [status, setStatus] = useState('loading')
