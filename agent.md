@@ -130,6 +130,9 @@ A deep repository audit of G9.1–G9.5 was completed against the production UX/r
 
 Phase 10 implementation is complete on GitHub. Runtime security verification remains intentionally deferred; no Phase 10 gate is considered CLOSED until the planned combined Firebase/Emulator verification pass provides evidence.
 
+### Phase 10 deep-audit repair record — 2026-09-20
+A line-by-line deep audit of G10.1–G10.5 was completed against the security contract. One substantive authorization defect was found: the Firestore `memberOf()` helper treated any active membership as authorized for protected clinic reads, even though the frozen authorization model accepts only `owner` and `admin` roles. This could have widened protected read access if an unsupported/legacy role existed. The helper was hardened to require both active membership and an accepted owner/admin role, and the contract smoke test plus G10.2/G10.3/G10.5 documentation were reconciled. Other Phase 10 boundaries were reviewed: Firebase Auth remains authoritative, client membership mutation is denied, appointment/analytics direct writes remain denied, trusted Functions validate authenticated membership and clinic ownership, server-side value snapshots remain authoritative, and public analytics/booking endpoints remain subject to the documented App Check/rate-control production boundary. Runtime security verification remains pending and no gate is closed.
+
 ### Phase 11 — Testing & Commercial Release
 - G11.1 Automated Tests — **IMPLEMENTED / PENDING CI + RUNTIME CLOSURE**
 - G11.2 Production Build — **IMPLEMENTED / PENDING CI + RUNTIME CLOSURE**
