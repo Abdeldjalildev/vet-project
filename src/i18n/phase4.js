@@ -39,6 +39,7 @@ const phase4Translations = {
     deactivateService: 'تعطيل',
     deleteService: 'حذف',
     confirmDeleteService: 'هل تريد حذف هذه الخدمة نهائياً؟',
+    serviceInUse: 'لا يمكن حذف خدمة مرتبطة بمواعيد محفوظة. يمكنك تعطيلها بدلاً من ذلك.',
   },
   en: {
     adminNavigation: 'Clinic administration navigation',
@@ -78,6 +79,7 @@ const phase4Translations = {
     deactivateService: 'Deactivate',
     deleteService: 'Delete',
     confirmDeleteService: 'Delete this service permanently?',
+    serviceInUse: 'This service is linked to saved appointments. Deactivate it instead of deleting it.',
   },
   fr: {
     adminNavigation: 'Navigation de l’administration',
@@ -117,6 +119,7 @@ const phase4Translations = {
     deactivateService: 'Désactiver',
     deleteService: 'Supprimer',
     confirmDeleteService: 'Supprimer définitivement ce service ?',
+    serviceInUse: 'Ce service est lié à des rendez-vous enregistrés. Désactivez-le au lieu de le supprimer.',
   },
 }
 
