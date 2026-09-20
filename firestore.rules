@@ -27,24 +27,6 @@ service cloud.firestore {
         (membership().role == 'owner' || membership().role == 'admin');
     }
 
-    function publicClinicFieldsAreSafe() {
-      return resource.data.keys().hasOnly([
-        'slug',
-        'public',
-        'active',
-        'name',
-        'logoUrl',
-        'branding',
-        'contact',
-        'openingHours',
-        'emergencyInformation',
-        'hero',
-        'about',
-        'footer',
-        'socialLinks'
-      ]);
-    }
-
     function clinicUpdateFieldsAreAllowed() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
         'name',
@@ -60,8 +42,8 @@ service cloud.firestore {
       ]);
     }
 
-    function publicServiceFieldsAreSafe() {
-      return resource.data.keys().hasOnly([
+    function serviceFieldsAreAllowed() {
+      return request.resource.data.keys().hasOnly([
         'name',
         'description',
         'icon',
@@ -72,8 +54,8 @@ service cloud.firestore {
       ]);
     }
 
-    function publicFaqFieldsAreSafe() {
-      return resource.data.keys().hasOnly([
+    function faqFieldsAreAllowed() {
+      return request.resource.data.keys().hasOnly([
         'question',
         'answer',
         'order',
@@ -95,22 +77,35 @@ service cloud.firestore {
     match /clinics/{clinicId} {
       allow read: if (
         resource.data.public == true &&
-        resource.data.active == true &&
-        publicClinicFieldsAreSafe()
+        resource.data.active == true
       ) || memberOf(clinicId);
 
       allow create: if false;
 
       allow update: if memberOf(clinicId) &&
         ownerOrAdmin() &&
-        clinicUpdateFieldsAreAllowed();
+        clinicUpdateFieldsAreAllowed() &&
+        request.resource.data.keys().hasOnly([
+          'slug',
+          'public',
+          'active',
+          'name',
+          'logoUrl',
+          'branding',
+          'contact',
+          'openingHours',
+          'emergencyInformation',
+          'hero',
+          'about',
+          'footer',
+          'socialLinks'
+        ]);
 
       allow delete: if false;
 
       match /services/{serviceId} {
         allow read: if (
-          resource.data.active == true &&
-          publicServiceFieldsAreSafe()
+          resource.data.active == true
         ) || memberOf(clinicId);
 
         allow create: if memberOf(clinicId) &&
@@ -126,8 +121,7 @@ service cloud.firestore {
 
       match /faqs/{faqId} {
         allow read: if (
-          resource.data.active == true &&
-          publicFaqFieldsAreSafe()
+          resource.data.active == true
         ) || memberOf(clinicId);
 
         allow create, update, delete: if memberOf(clinicId) && ownerOrAdmin();
