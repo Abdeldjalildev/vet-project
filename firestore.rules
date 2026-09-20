@@ -37,6 +37,13 @@ service cloud.firestore {
         get(/databases/$(database)/documents/clinics/$(clinicId)).data.active == true;
     }
 
+    function validServiceValue() {
+      return request.resource.data.price is number &&
+        request.resource.data.price >= 0 &&
+        request.resource.data.currency is string &&
+        request.resource.data.currency.matches('^[A-Z]{3}$');
+    }
+
     match /clinics/{clinicId} {
       allow read: if resource.data.public == true || memberOf(clinicId);
       allow create: if false;
@@ -44,88 +51,7 @@ service cloud.firestore {
 
       match /services/{serviceId} {
         allow read: if resource.data.active == true || memberOf(clinicId);
-        allow create: if memberOf(clinicId) && ownerOrAdmin() &&
-          request.resource.data.price is number &&
-          request.resource.data.price >= 0 &&
-          request.resource.data.currency is string &&
-          request.resource.data.currency.matches('^[A-Z]{3}
-      }
-
-      match /faqs/{faqId} {
-        allow read: if resource.data.active == true || memberOf(clinicId);
-        allow create, update, delete: if memberOf(clinicId) && ownerOrAdmin();
-      }
-
-      match /appointments/{appointmentId} {
-        allow read: if memberOf(clinicId);
-        // Public booking is validated atomically by the trusted Cloud Function.\n        allow create: if false;
-        // Appointment writes go through trusted Cloud Functions so lifecycle and conflict rules cannot be bypassed.\n        allow update, delete: if false;
-      }
-
-      match /analyticsEvents/{eventId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-
-      match /analyticsAggregates/{aggregateId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-    }
-
-    match /users/{uid} {
-      allow read: if signedIn() && request.auth.uid == uid;
-      allow create, delete: if false;
-      allow update: if false;
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-);
-        allow update: if memberOf(clinicId) && ownerOrAdmin() &&
-          request.resource.data.price is number &&
-          request.resource.data.price >= 0 &&
-          request.resource.data.currency is string &&
-          request.resource.data.currency.matches('^[A-Z]{3}
-      }
-
-      match /faqs/{faqId} {
-        allow read: if resource.data.active == true || memberOf(clinicId);
-        allow create, update, delete: if memberOf(clinicId) && ownerOrAdmin();
-      }
-
-      match /appointments/{appointmentId} {
-        allow read: if memberOf(clinicId);
-        // Public booking is validated atomically by the trusted Cloud Function.\n        allow create: if false;
-        // Appointment writes go through trusted Cloud Functions so lifecycle and conflict rules cannot be bypassed.\n        allow update, delete: if false;
-      }
-
-      match /analyticsEvents/{eventId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-
-      match /analyticsAggregates/{aggregateId} {
-        allow read: if memberOf(clinicId) && ownerOrAdmin();
-        allow create, update, delete: if false;
-      }
-    }
-
-    match /users/{uid} {
-      allow read: if signedIn() && request.auth.uid == uid;
-      allow create, delete: if false;
-      allow update: if false;
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-);
+        allow create, update: if memberOf(clinicId) && ownerOrAdmin() && validServiceValue();
         allow delete: if memberOf(clinicId) && ownerOrAdmin();
       }
 
@@ -136,8 +62,10 @@ service cloud.firestore {
 
       match /appointments/{appointmentId} {
         allow read: if memberOf(clinicId);
-        // Public booking is validated atomically by the trusted Cloud Function.\n        allow create: if false;
-        // Appointment writes go through trusted Cloud Functions so lifecycle and conflict rules cannot be bypassed.\n        allow update, delete: if false;
+        // Public booking is validated atomically by the trusted Cloud Function.
+        allow create: if false;
+        // Appointment writes go through trusted Cloud Functions so lifecycle and conflict rules cannot be bypassed.
+        allow update, delete: if false;
       }
 
       match /analyticsEvents/{eventId} {
