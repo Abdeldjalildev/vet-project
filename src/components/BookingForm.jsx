@@ -5,6 +5,8 @@ import { toast } from 'react-hot-toast'
 import { createPublicAppointment } from '../lib/appointments'
 import { localized } from '../lib/clinicData'
 
+const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition-all focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:border-gray-700/80 dark:bg-gray-800 dark:text-white'
+
 export default function BookingForm({ clinicId, services = [] }) {
   const { t, i18n } = useTranslation()
   const [formData, setFormData] = useState({
@@ -63,21 +65,21 @@ export default function BookingForm({ clinicId, services = [] }) {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <Field label={t('labelOwnerName')}>
-            <input name="ownerName" required value={formData.ownerName} onChange={updateField} className="input" />
+            <input name="ownerName" required value={formData.ownerName} onChange={updateField} className={inputClass} />
           </Field>
           <Field label={t('labelOwnerPhone')}>
-            <input name="ownerPhone" required value={formData.ownerPhone} onChange={updateField} className="input" />
+            <input name="ownerPhone" required value={formData.ownerPhone} onChange={updateField} className={inputClass} />
           </Field>
           <Field label={t('labelOwnerEmail')}>
-            <input type="email" name="ownerEmail" value={formData.ownerEmail} onChange={updateField} className="input" />
+            <input type="email" name="ownerEmail" value={formData.ownerEmail} onChange={updateField} className={inputClass} />
           </Field>
           <Field label={t('labelPetName')}>
-            <input name="petName" required value={formData.petName} onChange={updateField} placeholder={t('phPetName')} className="input" />
+            <input name="petName" required value={formData.petName} onChange={updateField} placeholder={t('phPetName')} className={inputClass} />
           </Field>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <Field label={t('labelPetType')}>
-              <select name="petType" required value={formData.petType} onChange={updateField} className="input">
+              <select name="petType" required value={formData.petType} onChange={updateField} className={inputClass}>
                 <option value="">{t('optSelectType')}</option>
                 <option value="cat">{t('optCat')}</option>
                 <option value="dog">{t('optDog')}</option>
@@ -86,7 +88,7 @@ export default function BookingForm({ clinicId, services = [] }) {
               </select>
             </Field>
             <Field label={t('labelService')}>
-              <select name="serviceId" required value={formData.serviceId} onChange={updateField} className="input">
+              <select name="serviceId" required value={formData.serviceId} onChange={updateField} className={inputClass}>
                 <option value="">{t('optSelectService')}</option>
                 {services.map((service) => (
                   <option key={service.serviceId} value={service.serviceId}>
@@ -99,10 +101,10 @@ export default function BookingForm({ clinicId, services = [] }) {
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <Field label={t('labelDate')}>
-              <input type="date" name="date" required min={getToday()} value={formData.date} onChange={updateField} className="input font-mono" />
+              <input type="date" name="date" required min={getToday()} value={formData.date} onChange={updateField} className={`${inputClass} font-mono`} />
             </Field>
             <Field label={t('labelTime')}>
-              <input type="time" name="time" required value={formData.time} onChange={updateField} className="input font-mono" />
+              <input type="time" name="time" required value={formData.time} onChange={updateField} className={`${inputClass} font-mono`} />
             </Field>
           </div>
 
