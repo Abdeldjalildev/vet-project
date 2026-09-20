@@ -124,15 +124,6 @@ service cloud.firestore {
         request.resource.data.active is bool;
     }
 
-    function validServiceValue() {
-      return request.resource.data.price is number && request.resource.data.price >= 0 &&
-        request.resource.data.currency is string && request.resource.data.currency.matches('^[A-Z]{3}$');
-    }
-
-    function existingServiceValueIsValidOrAbsent() {
-      return !('price' in request.resource.data) || validServiceValue();
-    }
-
     match /clinics/{clinicId} {
       allow read: if (resource.data.public == true && resource.data.active == true) || memberOf(clinicId);
       allow create: if false;
