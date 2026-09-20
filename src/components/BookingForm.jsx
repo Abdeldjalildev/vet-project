@@ -109,7 +109,7 @@ export default function BookingForm({ clinicId, services = [] }) {
           </div>
 
           <Field label={t('labelNotes')}>
-            <textarea name="notes" value={formData.notes} onChange={updateField} rows="3" className="input resize-y" />
+            <textarea name="notes" value={formData.notes} onChange={updateField} rows="3" className={`${inputClass} resize-y`} />
           </Field>
 
           <motion.button
