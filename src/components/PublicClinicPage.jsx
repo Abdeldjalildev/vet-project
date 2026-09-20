@@ -92,7 +92,7 @@ export default function PublicClinicPage({ clinicSlug }) {
       <Navbar clinic={clinic} />
       <main>
         <Hero clinic={clinic} />
-        <Services services={services} />
+        <Services clinicId={clinic.clinicId} services={services} />
         <About clinic={clinic} />
         <VetTips />
         <Faq faqs={faqs} />
