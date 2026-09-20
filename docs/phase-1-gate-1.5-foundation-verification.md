@@ -23,12 +23,12 @@
 7. The authenticated member can access only its own clinic's protected data.
 8. A different clinic's protected data is denied.
 9. Self-created or self-modified membership is denied.
-10. Public reads expose only explicitly public/active documents whose fields remain within the approved public schema.
+10. Public reads expose only explicitly public/active documents; client writes are constrained to the approved public/managed schemas.
 11. Direct client appointment mutations are denied; valid public appointment creation is accepted only through the Phase 3 trusted function, which validates clinic/service ownership and scheduling constraints.
 12. Direct client writes to analytics aggregates are denied.
 13. Unspecified collections/documents remain denied.
 14. Public clinic/service/FAQ queries satisfy the same constraints enforced by their Security Rules.
-15. Client clinic updates cannot add or mutate fields outside the approved managed-content contract, and client clinic deletion is denied.
+15. Client clinic updates cannot add or mutate fields outside the approved managed-content contract; service and FAQ writes are field-bounded; client clinic deletion is denied.
 
 ## Evidence boundary
 GitHub source inspection can establish implementation presence and configuration, but it cannot prove the real Firebase project's Auth provider state, membership documents, or runtime rule decisions.
