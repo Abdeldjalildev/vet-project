@@ -1,6 +1,6 @@
 # VetLife — Phase 1 / Gate 1.4 Security Rules
 
-**Status:** IMPLEMENTED — EXTERNAL RULES RUNTIME VERIFICATION REQUIRED
+**Status:** IMPLEMENTED — EXTERNAL RULES RUNTIME VERIFICATION REQUIRED; PHASE 2 EXTENDS THE APPOINTMENT CREATE BOUNDARY
 
 ## Implemented boundary
 - Default deny for unspecified documents.
