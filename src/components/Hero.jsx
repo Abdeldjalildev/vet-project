@@ -1,40 +1,39 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'
+import { localized } from '../lib/clinicData'
 
-export default function Hero() {
-  const { t } = useTranslation();
+export default function Hero({ clinic }) {
+  const { t, i18n } = useTranslation()
+  const hero = clinic.hero || {}
 
   return (
-    <section id="hero" className="flex flex-col items-center justify-center text-center px-6 py-20 max-w-4xl mx-auto transition-colors duration-300">
-      {/* Highlighting badge with custom dynamic contrast for both themes */}
-      <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-sm font-semibold px-4 py-1.5 rounded-full mb-6 inline-block">
-        {t('heroBadge')}
+    <section id="hero" className="mx-auto flex max-w-4xl flex-col items-center justify-center px-6 py-20 text-center transition-colors duration-300">
+      <span className="mb-6 inline-block rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+        {localized(hero.badge, i18n.language) || t('heroBadge')}
       </span>
-      
-      {/* Main typography showcasing smooth text-gradient integration */}
-      <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white leading-tight mb-6">
-        {t('heroWelcome')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-emerald-500 dark:from-sky-400 dark:to-emerald-400">VetLife</span> {t('heroModern')}
+
+      <h1 className="mb-6 text-4xl font-black leading-tight text-slate-900 dark:text-white md:text-6xl">
+        {localized(hero.title, i18n.language) || localized(clinic.name, i18n.language)}
       </h1>
-      
-      <p className="text-slate-600 dark:text-slate-300 text-lg md:text-xl max-w-2xl mb-10 leading-relaxed">
-        {t('heroDescription')}
+
+      <p className="mb-10 max-w-2xl text-lg leading-relaxed text-slate-600 dark:text-slate-300 md:text-xl">
+        {localized(hero.description, i18n.language)}
       </p>
 
-      {/* Responsive button cluster with human-optimized hover transitions */}
       <div className="flex flex-wrap items-center justify-center gap-4">
-        <a 
+        <a
           href="#booking"
-          className="bg-sky-600 hover:bg-sky-700 text-white font-bold px-8 py-4 rounded-2xl shadow-lg shadow-sky-600/20 dark:shadow-none transition-all hover:-translate-y-0.5 text-center"
+          className="rounded-2xl px-8 py-4 font-bold text-white shadow-lg transition-all hover:-translate-y-0.5"
+          style={{ backgroundColor: 'var(--clinic-primary)' }}
         >
           {t('heroBtnBook')}
         </a>
-        <a 
-          href="#services" 
-          className="bg-white dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-gray-700 font-bold px-8 py-4 rounded-2xl transition-all inline-block"
+        <a
+          href="#services"
+          className="inline-block rounded-2xl border border-slate-200 bg-white px-8 py-4 font-bold text-slate-700 transition-all hover:bg-slate-100 dark:border-gray-700 dark:bg-gray-800 dark:text-slate-200 dark:hover:bg-gray-750"
         >
           {t('heroBtnDiscover')}
         </a>
       </div>
     </section>
-  );
+  )
 }
