@@ -15,6 +15,9 @@
 - application error boundary;
 - public loading/error/retry states;
 - booking conflict/error feedback;
+- booking success is decoupled from non-critical analytics event delivery;
+- recoverable admin data-load retry actions;
+- route-level Phase 9 states use i18n;
 - appointment transition error feedback;
 - mobile public navigation;
 - keyboard skip navigation;
