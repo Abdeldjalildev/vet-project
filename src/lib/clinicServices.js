@@ -1,5 +1,11 @@
-import { addDoc, deleteDoc, doc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore'
-import { clinicAppointmentsRef, clinicServicesRef, firestore } from './firestore'
+import { addDoc, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
+import { getFunctions } from 'firebase/functions'
+import { firebaseApp } from './firebase'
+import { clinicServicesRef, firestore } from './firestore'
+
+const functions = getFunctions(firebaseApp, 'us-central1')
+const deleteClinicServiceCall = httpsCallable(functions, 'deleteClinicService')
 
 const normalizeLocalized = (value) => ({
   ar: typeof value?.ar === 'string' ? value.ar.trim() : '',
@@ -61,13 +67,6 @@ export const setClinicServiceActive = async (clinicId, serviceId, active) => {
 }
 
 export const deleteClinicService = async (clinicId, serviceId) => {
-  const appointments = await getDocs(
-    query(clinicAppointmentsRef(clinicId), where('serviceId', '==', serviceId)),
-  )
-
-  if (!appointments.empty) {
-    throw new Error('SERVICE_IN_USE')
-  }
-
-  await deleteDoc(doc(firestore, 'clinics', clinicId, 'services', serviceId))
+  const result = await deleteClinicServiceCall({ clinicId, serviceId })
+  return result.data
 }
