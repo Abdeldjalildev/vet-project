@@ -37,6 +37,14 @@ assert.match(rules, /currency\.matches\('\^\[A-Z\]\{3\}\$'/)
 assert.ok(!rules.includes(');\n    }\n\n    function existingServiceValueIsValidOrAbsent'))
 assert.ok(!rules.includes('^[A-Z]{3}\n'))
 
+
+assert.match(rules, /'description'/)
+assert.match(rules, /validHttpsUrl/)
+assert.match(rules, /validManagedContent/)
+assert.match(rules, /validFaq/)
+assert.match(rules, /primaryColor\.matches/)
+assert.match(rules, /socialLinks/)
+
 console.log('VetLife contract smoke tests: PASS')
 
 assert.equal(true, true, 'Missing dashboard appointment date/time index')
