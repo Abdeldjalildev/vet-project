@@ -56,6 +56,9 @@ A repository-level deep audit of G4.1–G4.5 was completed against the Phase 0 r
 - G4.4 Services Management — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
 - G4.5 Admin/Public Synchronization — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
 
+### Phase 5 deep-audit repair record — 2026-09-20
+A repository-level deep audit of G5.1–G5.5 was completed against this contract and the Phase 0–4 security/data boundaries. The audit found a real Firestore contract drift: updateClinicProfile writes the managed description field, but the clinic update rule did not permit that field, so the profile operation could be rejected at the backend boundary. The audit also found that public logo/social URLs and branding colors were not constrained by Firestore, and FAQ/managed-content document shapes were only allowlisted at the top level. These boundaries were tightened: description is now an approved clinic field; logo/social destinations are HTTPS-only (or empty); branding colors are six-digit hexadecimal values; managed hero/about/footer structures and FAQ localized fields/order/active types are validated. The public content remains structured and bounded, with no arbitrary HTML/CSS/page-builder surface introduced. Contract-smoke coverage was updated for the new Phase 5 boundaries. Runtime verification remains pending.
+
 ### Phase 5 — Full Clinic Content & Configuration
 - G5.1 Clinic Profile — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
 - G5.2 Branding — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
