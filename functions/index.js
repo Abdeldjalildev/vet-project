@@ -140,6 +140,10 @@ exports.createPublicAppointment = onCall({ region: 'us-central1' }, async (reque
       fail('failed-precondition', 'Selected service is not available.')
     }
 
+    const service = serviceSnapshot.data()
+    const servicePrice = typeof service.price === 'number' && Number.isFinite(service.price) && service.price >= 0 ? service.price : 0
+    const serviceCurrency = typeof service.currency === 'string' && /^[A-Z]{3}$/.test(service.currency) ? service.currency : 'DZD'
+
     const existing = await transaction.get(
       clinicRef
         .collection('appointments')
@@ -165,6 +169,8 @@ exports.createPublicAppointment = onCall({ region: 'us-central1' }, async (reque
       date: booking.date,
       time: booking.time,
       notes: booking.notes,
+      estimatedServiceValue: servicePrice,
+      serviceCurrency,
       status: 'pending',
       createdAt: now,
       updatedAt: now,
@@ -332,6 +338,31 @@ exports.transitionAppointment = onCall({ region: 'us-central1' }, async (request
       status: nextStatus,
       updatedAt: FieldValue.serverTimestamp(),
     })
+
+    if (nextStatus === 'completed') {
+      const revenueAggregateRef = clinics
+        .doc(clinicId)
+        .collection('analyticsAggregates')
+        .doc(new Date().toISOString().slice(0, 10))
+      const value = typeof appointment.estimatedServiceValue === 'number'
+        && Number.isFinite(appointment.estimatedServiceValue)
+        && appointment.estimatedServiceValue >= 0
+        ? appointment.estimatedServiceValue
+        : 0
+      const currency = typeof appointment.serviceCurrency === 'string'
+        && /^[A-Z]{3}$/.test(appointment.serviceCurrency)
+        ? appointment.serviceCurrency
+        : 'DZD'
+
+      transaction.set(revenueAggregateRef, {
+        clinicId,
+        date: new Date().toISOString().slice(0, 10),
+        completedServices: FieldValue.increment(1),
+        estimatedCompletedServiceValue: FieldValue.increment(value),
+        revenueCurrency: currency,
+        revenueUpdatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true })
+    }
   })
 
   return { appointmentId, status: nextStatus }
