@@ -33,6 +33,14 @@ service cloud.firestore {
       );
     }
 
+    function validFeature(feature) {
+      return feature is map &&
+        feature.keys().hasOnly(['id', 'icon', 'title', 'description']) &&
+        feature.icon is string &&
+        validLocalized(feature.title) &&
+        validLocalized(feature.description);
+    }
+
     function validManagedContent() {
       return (!('hero' in request.resource.data) || (
         request.resource.data.hero is map &&
@@ -47,7 +55,9 @@ service cloud.firestore {
         validLocalized(request.resource.data.about.title) &&
         validLocalized(request.resource.data.about.description) &&
         validLocalized(request.resource.data.about.quote) &&
-        request.resource.data.about.features is list
+        request.resource.data.about.features is list &&
+        request.resource.data.about.features.size() <= 12 &&
+        request.resource.data.about.features.all(feature, validFeature(feature))
       )) &&
       (!('footer' in request.resource.data) || (
         request.resource.data.footer is map &&
