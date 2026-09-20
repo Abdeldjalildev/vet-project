@@ -49,6 +49,8 @@ export const updateClinicService = async (clinicId, serviceId, input) => {
     name,
     description,
     icon: input.icon?.trim() || '🩺',
+    price: Number.isFinite(input.price) && input.price >= 0 ? input.price : 0,
+    currency: typeof input.currency === 'string' && /^[A-Z]{3}$/.test(input.currency) ? input.currency : 'DZD',
     order: Number.isFinite(input.order) ? input.order : 0,
     active: input.active !== false,
   })
