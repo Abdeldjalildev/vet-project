@@ -44,7 +44,7 @@ export default function ClinicAppointmentsAdmin({ clinicId }) {
   }
 
   if (status === 'loading') return <State message={t('loadingAppointments')} />
-  if (status === 'error') return <State message={t('appointmentLoadError')} />
+  if (status === 'error') return <State message={t('appointmentLoadError')} retry={load} />
   if (appointments.length === 0) return <State message={t('noAppointments')} />
 
   return (
@@ -95,6 +95,7 @@ function Info({ label, value }) {
   )
 }
 
-function State({ message }) {
-  return <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">{message}</div>
+function State({ message, retry }) {
+  const { t } = useTranslation()
+  return <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" >{message}{retry && <button type="button" onClick={retry} className="mt-4 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white">{t('retry')}</button>}</div>
 }
