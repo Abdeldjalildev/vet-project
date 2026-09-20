@@ -28,6 +28,17 @@ Phase 1 is intentionally left pending until the local/Firebase verification pass
 Phase 2 implementation is complete on GitHub. Runtime verification is intentionally deferred so Phase 1 and Phase 2 can be tested together in the intended Firebase project.
 
 
+### Phase 3 — Real Appointment System
+- G3.1 Appointment Model — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G3.2 Validation — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G3.3 Availability / Conflict Protection — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G3.4 Appointment Lifecycle — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G3.5 End-to-End Flow — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+
+Phase 3 implementation is complete on GitHub. Runtime verification is intentionally deferred with Phases 1–3 to preserve the agreed evidence-first closure workflow.
+
+
+
 ---
 
 ## 1. Mission
