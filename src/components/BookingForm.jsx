@@ -27,6 +27,7 @@ export default function BookingForm({ clinicId, services = [] }) {
     notes: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const updateField = (event) => {
     const { name, value } = event.target
@@ -42,12 +43,14 @@ export default function BookingForm({ clinicId, services = [] }) {
       return
     }
 
+    setSubmitError('')
     setIsSubmitting(true)
 
     try {
       await createPublicAppointment(clinicId, validation.value)
       await trackPublicEvent({ clinicId, eventType: 'booking_completed', page: 'booking' })
       toast.success(t('successMessage'))
+      setSubmitError('')
       setFormData({
         petName: '',
         petType: '',
@@ -61,7 +64,7 @@ export default function BookingForm({ clinicId, services = [] }) {
       })
     } catch (error) {
       console.error('Public booking failed', error)
-      toast.error(t('bookingError'))
+      setSubmitError(error?.code === 'already-exists' ? t('bookingSlotUnavailable') : t('bookingError'))
     } finally {
       setIsSubmitting(false)
     }
@@ -77,16 +80,16 @@ export default function BookingForm({ clinicId, services = [] }) {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <Field label={t('labelOwnerName')}>
-            <input name="ownerName" required value={formData.ownerName} onChange={updateField} className={inputClass} />
+            <input name="ownerName" autoComplete="name" required value={formData.ownerName} onChange={updateField} className={inputClass} />
           </Field>
           <Field label={t('labelOwnerPhone')}>
-            <input name="ownerPhone" required value={formData.ownerPhone} onChange={updateField} className={inputClass} />
+            <input name="ownerPhone" autoComplete="tel" inputMode="tel" required value={formData.ownerPhone} onChange={updateField} className={inputClass} />
           </Field>
           <Field label={t('labelOwnerEmail')}>
-            <input type="email" name="ownerEmail" value={formData.ownerEmail} onChange={updateField} className={inputClass} />
+            <input type="email" name="ownerEmail" autoComplete="email" value={formData.ownerEmail} onChange={updateField} className={inputClass} />
           </Field>
           <Field label={t('labelPetName')}>
-            <input name="petName" required value={formData.petName} onChange={updateField} placeholder={t('phPetName')} className={inputClass} />
+            <input name="petName" autoComplete="off" required value={formData.petName} onChange={updateField} placeholder={t('phPetName')} className={inputClass} />
           </Field>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -123,6 +126,8 @@ export default function BookingForm({ clinicId, services = [] }) {
           <Field label={t('labelNotes')}>
             <textarea name="notes" value={formData.notes} onChange={updateField} rows="3" className={`${inputClass} resize-y`} />
           </Field>
+
+          {submitError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{submitError}</p>}
 
           <motion.button
             whileTap={{ scale: 0.98 }}
