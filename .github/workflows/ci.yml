@@ -1,0 +1,37 @@
+name: VetLife CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install web dependencies
+        run: npm ci
+      - name: Contract smoke tests
+        run: npm run test:contract
+      - name: Validate Cloud Functions syntax
+        run: node --check functions/index.js
+      - name: Build web application
+        run: npm run build
+      - name: Install Functions dependencies
+        working-directory: functions
+        run: npm install --ignore-scripts --no-package-lock
+      - name: Validate Functions dependency tree
+        working-directory: functions
+        run: npm ls --depth=0
