@@ -1,56 +1,46 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'
+import { localized } from '../lib/clinicData'
 
-export default function Services() {
-  const { t } = useTranslation();
+export default function Services({ services = [] }) {
+  const { t, i18n } = useTranslation()
 
   return (
-    <section id="services" className="py-20 px-8 border-t border-b transition-colors duration-300 bg-white dark:bg-gray-950 border-slate-100 dark:border-gray-800/60">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4">
+    <section id="services" className="border-y border-slate-100 bg-white px-8 py-20 transition-colors duration-300 dark:border-gray-800/60 dark:bg-gray-950">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-16 text-center">
+          <h2 className="mb-4 text-3xl font-extrabold text-slate-900 dark:text-white md:text-4xl">
             {t('servicesTitle')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-lg max-w-xl mx-auto">
+          <p className="mx-auto max-w-xl text-lg text-slate-500 dark:text-slate-400">
             {t('servicesSubtitle')}
           </p>
         </div>
 
-        {/* Services Grid Matrix */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          
-          {/* Card 1: General Checkup */}
-          <div className="p-6 rounded-2xl border transition-all duration-300 group bg-slate-50 dark:bg-gray-900 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 border-slate-100 dark:border-gray-800 hover:shadow-xl dark:hover:shadow-none">
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xl mb-4 group-hover:bg-emerald-500 group-hover:text-white dark:group-hover:text-white transition-colors">🩺</div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('service1Title')}</h3>
-            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{t('service1Desc')}</p>
+        {services.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-gray-700 dark:text-slate-400">
+            {t('noServices')}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {services.map((service) => (
+              <article
+                key={service.serviceId}
+                className="group rounded-2xl border border-slate-100 bg-slate-50 p-6 transition-all duration-300 hover:shadow-xl dark:border-gray-800 dark:bg-gray-900 dark:hover:shadow-none"
+              >
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-xl font-bold text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
+                  {service.icon || '🩺'}
+                </div>
+                <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white">
+                  {localized(service.name, i18n.language)}
+                </h3>
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {localized(service.description, i18n.language)}
+                </p>
+              </article>
+            ))}
           </div>
-
-          {/* Card 2: Vaccinations */}
-          <div className="p-6 rounded-2xl border transition-all duration-300 group bg-slate-50 dark:bg-gray-900 hover:bg-sky-50/50 dark:hover:bg-sky-950/20 border-slate-100 dark:border-gray-800 hover:shadow-xl dark:hover:shadow-none">
-            <div className="w-12 h-12 rounded-xl bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold text-xl mb-4 group-hover:bg-sky-500 group-hover:text-white dark:group-hover:text-white transition-colors">💉</div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('service2Title')}</h3>
-            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{t('service2Desc')}</p>
-          </div>
-
-          {/* Card 3: Grooming */}
-          <div className="p-6 rounded-2xl border transition-all duration-300 group bg-slate-50 dark:bg-gray-900 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 border-slate-100 dark:border-gray-800 hover:shadow-xl dark:hover:shadow-none">
-            <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xl mb-4 group-hover:bg-amber-500 group-hover:text-white dark:group-hover:text-white transition-colors">✂️</div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('service3Title')}</h3>
-            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{t('service3Desc')}</p>
-          </div>
-
-          {/* Card 4: Surgery */}
-          <div className="p-6 rounded-2xl border transition-all duration-300 group bg-slate-50 dark:bg-gray-900 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 border-slate-100 dark:border-gray-800 hover:shadow-xl dark:hover:shadow-none">
-            <div className="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold text-xl mb-4 group-hover:bg-rose-500 group-hover:text-white dark:group-hover:text-white transition-colors">🔬</div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('service4Title')}</h3>
-            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{t('service4Desc')}</p>
-          </div>
-
-        </div>
+        )}
       </div>
     </section>
-  );
+  )
 }
