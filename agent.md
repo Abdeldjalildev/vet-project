@@ -141,6 +141,11 @@ A line-by-line deep audit of G10.1–G10.5 was completed against the security co
 - G11.5 Commercial Release Gate — **IMPLEMENTED / PENDING RELEASE EVIDENCE**
 
 Phase 11 implementation is complete on GitHub. Runtime, deployment, and commercial-release verification remain intentionally deferred until concrete evidence is collected.
+
+### Phase 11 deep-audit repair record — 2026-09-20
+A line-by-line deep audit of G11.1–G11.5 was completed against the Definition of Done, evidence-first rules, and the repository's actual deployment/testing state. The first CI execution exposed a real cross-platform lockfile defect: Linux `npm ci` rejected the repository lock because `@emnapi/core@1.11.3` and `@emnapi/runtime@1.11.3` were absent from the lock despite being required by the Linux dependency graph. The lockfile was repaired with the exact registry metadata and a contract assertion was added to prevent recurrence. The contract smoke test itself also contained an incorrect assumption that every admin route string appears literally in `App.jsx`; the application intentionally derives section routes from a validated `validSections` list, so the test was corrected to assert the real routing contract rather than changing application code. Deployment documentation was reconciled with the repository's current Vercel web deployment metadata and now requires explicit deployment/rollback evidence. CI/runtime/deployment closure remains pending.
+
+A remaining release-hardening boundary is intentionally not claimed as solved: `functions/package-lock.json` is absent, so CI currently installs Functions dependencies with `npm install --ignore-scripts --no-package-lock` rather than a reproducibly pinned Functions lockfile. This does not invalidate source implementation, but it prevents a claim of fully reproducible Functions dependency installation and must remain visible before commercial release closure.
 ## 1. Mission
 
 VetLife is being transformed into a real product that can be customized and sold to veterinary clinics.
