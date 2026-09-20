@@ -251,11 +251,15 @@ function validateAnalyticsPayload(data) {
   const deviceType = requireString(data.deviceType || 'unknown', 'deviceType', 20)
   const eventId = requireDocumentId(data.eventId, 'eventId')
   const serviceId = typeof data.serviceId === 'string' ? data.serviceId.trim() : ''
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
   if (!ANALYTICS_EVENT_TYPES.has(eventType)) fail('invalid-argument', 'Analytics event type is invalid.')
   if (!ANALYTICS_ALLOWED_PAGES.has(page)) fail('invalid-argument', 'Analytics page is invalid.')
   if (!/^[a-z]{2}$/.test(language)) fail('invalid-argument', 'Analytics language is invalid.')
-  if (serviceId.length > 128) fail('invalid-argument', 'Analytics service identifier is invalid.')
+  if (!uuidPattern.test(sessionId)) fail('invalid-argument', 'sessionId is invalid.')
+  if (!uuidPattern.test(visitorId)) fail('invalid-argument', 'visitorId is invalid.')
+  if (!uuidPattern.test(eventId)) fail('invalid-argument', 'eventId is invalid.')
+  if (serviceId.length > 128 || serviceId.includes('/')) fail('invalid-argument', 'Analytics service identifier is invalid.')
 
   return { clinicId, eventType, page, sessionId, visitorId, language, deviceType, serviceId, eventId }
 }
