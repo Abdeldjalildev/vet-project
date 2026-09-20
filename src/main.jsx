@@ -4,6 +4,7 @@ import './index.css'
 import './i18n/phase2'
 import './i18n/phase4'
 import './i18n/phase5'
+import './i18n/phase6'
 import App from './App.jsx'
 import { AuthProvider } from './auth/AuthProvider'
 
