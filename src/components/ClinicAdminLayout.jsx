@@ -3,6 +3,7 @@ import { getDoc } from 'firebase/firestore'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthProvider'
 import { clinicRef, userRef } from '../lib/firestore'
+import { localized } from '../lib/clinicData'
 
 const NAV_ITEMS = [
   ['dashboard', 'adminNavDashboard'],
@@ -69,7 +70,7 @@ export default function ClinicAdminLayout({ section, children }) {
       <aside className="fixed inset-y-0 start-0 z-40 hidden w-64 border-e border-slate-200 bg-white dark:border-gray-800 dark:bg-gray-900 lg:flex lg:flex-col">
         <div className="border-b border-slate-200 px-6 py-6 dark:border-gray-800">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">VetLife</p>
-          <h1 className="mt-2 truncate text-lg font-black">{clinic.name || 'Clinic'}</h1>
+          <h1 className="mt-2 truncate text-lg font-black">{localized(clinic.name, i18n.language) || 'Clinic'}</h1>
           <p className="mt-1 truncate text-xs text-slate-500 dark:text-gray-400">{user.email}</p>
         </div>
 
