@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthProvider'
 import { clinicRef, userRef } from '../lib/firestore'
 import { localized } from '../lib/clinicData'
-import { trackAdminEvent } from '../lib/analytics'
 
 const NAV_ITEMS = [
   ['dashboard', 'adminNavDashboard'],
@@ -57,10 +56,6 @@ export default function ClinicAdminLayout({ section, children }) {
       cancelled = true
     }
   }, [user.uid])
-
-  useEffect(() => {
-    if (status === 'ready') trackAdminEvent({ clinicId: membership.clinicId, eventType: 'admin_section_view', page: section })
-  }, [status, membership, section])
 
   const handleSignOut = async () => {
     await signOut()
