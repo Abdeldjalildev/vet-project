@@ -10,12 +10,15 @@ import './i18n/phase8'
 import './i18n/phase9'
 import App from './App.jsx'
 import { AuthProvider } from './auth/AuthProvider'
+import AppErrorBoundary from './components/AppErrorBoundary'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Suspense fallback={<div className="p-4 text-center">Loading...</div>}>
       <AuthProvider>
-        <App />
+        <AppErrorBoundary>
+          <App />
+        </AppErrorBoundary>
       </AuthProvider>
     </Suspense>
   </StrictMode>,
