@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { toast } from 'react-hot-toast'
 import { createPublicAppointment } from '../lib/appointments'
 import { localized } from '../lib/clinicData'
+import { getTodayDate, validateAppointmentInput } from '../lib/appointmentValidation'
 
 const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition-all focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:border-gray-700/80 dark:bg-gray-800 dark:text-white'
 
@@ -27,20 +28,19 @@ export default function BookingForm({ clinicId, services = [] }) {
     setFormData((previous) => ({ ...previous, [name]: value }))
   }
 
-  const getToday = () => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
-
   const handleSubmit = async (event) => {
     event.preventDefault()
+
+    const validation = validateAppointmentInput(formData)
+    if (!validation.valid) {
+      toast.error(t('bookingValidationError'))
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
-      await createPublicAppointment(clinicId, formData)
+      await createPublicAppointment(clinicId, validation.value)
       toast.success(t('successMessage'))
       setFormData({
         petName: '',
@@ -107,7 +107,7 @@ export default function BookingForm({ clinicId, services = [] }) {
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <Field label={t('labelDate')}>
-              <input type="date" name="date" required min={getToday()} value={formData.date} onChange={updateField} className={`${inputClass} font-mono`} />
+              <input type="date" name="date" required min={getTodayDate()} value={formData.date} onChange={updateField} className={`${inputClass} font-mono`} />
             </Field>
             <Field label={t('labelTime')}>
               <input type="time" name="time" required value={formData.time} onChange={updateField} className={`${inputClass} font-mono`} />
