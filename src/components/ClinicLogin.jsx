@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthProvider'
 
 const getAuthErrorMessage = (error) => {
@@ -6,18 +7,19 @@ const getAuthErrorMessage = (error) => {
     case 'auth/invalid-credential':
     case 'auth/user-not-found':
     case 'auth/wrong-password':
-      return 'The email or password is incorrect.'
+      return 'authInvalidCredentials'
     case 'auth/too-many-requests':
-      return 'Too many sign-in attempts. Please try again later.'
+      return 'authTooManyRequests'
     case 'auth/network-request-failed':
-      return 'A network error prevented sign-in. Check your connection and try again.'
+      return 'authNetworkError'
     default:
-      return 'Sign-in failed. Please try again.'
+      return 'authSignInFailed'
   }
 }
 
 export default function ClinicLogin() {
   const { signIn } = useAuth()
+  const { t } = useTranslation()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -47,10 +49,10 @@ export default function ClinicLogin() {
             VetLife Clinic
           </p>
           <h1 className="mt-2 text-3xl font-black text-slate-900 dark:text-white">
-            Clinic sign in
+            {t('authLoginTitle')}
           </h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
-            Use the Firebase Authentication account assigned to this clinic.
+            {t('authLoginHint')}
           </p>
         </div>
 
@@ -85,7 +87,7 @@ export default function ClinicLogin() {
 
           {errorMessage ? (
             <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
-              {errorMessage}
+              {errorMessage ? t(errorMessage) : ''}
             </p>
           ) : null}
 
@@ -94,7 +96,7 @@ export default function ClinicLogin() {
             disabled={isSubmitting}
             className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-bold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
+            {isSubmitting ? t('authSigningIn') : t('authSignIn')}
           </button>
         </form>
       </section>
