@@ -22,6 +22,7 @@ export default function ClinicSettingsAdmin({ clinicId, clinic }) {
     logoUrl: clinic.logoUrl || '',
   })
   const [saving, setSaving] = useState('')
+  const [hours, setHours] = useState(clinic.openingHours || {})
   const [message, setMessage] = useState('')
 
   const saveProfile = async (event) => {
@@ -29,7 +30,7 @@ export default function ClinicSettingsAdmin({ clinicId, clinic }) {
     setSaving('profile')
     setMessage('')
     try {
-      await updateClinicProfile(clinicId, profile)
+      await updateClinicProfile(clinicId, { ...profile, openingHours: hours })
       setMessage(t('profileSaved'))
     } catch {
       setMessage(t('profileSaveError'))
@@ -67,6 +68,17 @@ export default function ClinicSettingsAdmin({ clinicId, clinic }) {
             <Field label={t('email')} type="email" value={profile.email} onChange={(email) => setProfile((v) => ({ ...v, email }))} />
           </div>
           <LocalizedFields label={t('address')} value={profile.address} onChange={(address) => setProfile((v) => ({ ...v, address }))} />
+          <fieldset>
+            <legend className="mb-3 text-sm font-bold">{t('openingHours')}</legend>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                <label key={day} className="text-xs font-bold uppercase text-slate-500">
+                  {day}
+                  <input value={hours[day] || ''} onChange={(e) => setHours((v) => ({ ...v, [day]: e.target.value }))} placeholder="09:00 - 17:00" className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm font-normal dark:border-gray-700 dark:bg-gray-950" />
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <button disabled={saving === 'profile'} className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">
             {saving === 'profile' ? t('saving') : t('saveProfile')}
           </button>
