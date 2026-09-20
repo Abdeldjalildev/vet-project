@@ -6,6 +6,7 @@ import { localized } from '../lib/clinicData'
 export default function Navbar({ clinic }) {
   const { t, i18n } = useTranslation()
   const [isDark, setIsDark] = useState(() => getInitialTheme())
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/90 text-slate-800 backdrop-blur-md transition-colors duration-300 dark:border-gray-800 dark:bg-gray-900/90 dark:text-white">
@@ -52,6 +53,15 @@ export default function Navbar({ clinic }) {
             {isDark ? '☀️' : '🌙'}
           </button>
         </div>
+        {isMenuOpen && (
+          <div className="border-t border-slate-100 py-3 md:hidden dark:border-gray-800">
+            <nav aria-label={t('publicNavigation')} className="grid gap-1">
+              {[['#hero', 'navHome'], ['#about', 'navAbout'], ['#services', 'navServices'], ['#faq', 'navFaq'], ['#booking', 'heroBtnBook']].map(([href, key]) => (
+                <a key={href} href={href} onClick={() => setIsMenuOpen(false)} className="rounded-xl px-3 py-3 text-sm font-bold hover:bg-slate-100 dark:hover:bg-gray-800">{t(key)}</a>
+              ))}
+            </nav>
+          </div>
+        )}
       </div>
     </nav>
   )
