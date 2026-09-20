@@ -25,9 +25,9 @@ assert.deepEqual(packageLock.packages[''].devDependencies, packageJson.devDepend
 assert.equal(packageLock.packages['node_modules/@emnapi/core'].version, '1.11.3')
 assert.equal(packageLock.packages['node_modules/@emnapi/runtime'].version, '1.11.3')
 
-for (const route of ['/clinic/login', '/clinic/dashboard', '/clinic/appointments', '/clinic/services', '/clinic/content', '/clinic/analytics', '/clinic/settings']) {
-  assert.ok(app.includes(route), `Missing route contract: ${route}`)
-}
+assert.match(app, /path === '\/clinic\/login'/)
+assert.match(app, /path === '\/clinic\/dashboard'/)
+assert.match(app, /const validSections = \['dashboard', 'appointments', 'services', 'content', 'analytics', 'settings'\]/)
 
 assert.match(main, /AppErrorBoundary/)
 for (const exportName of ['createPublicAppointment', 'recordAnalyticsEvent', 'transitionAppointment', 'deleteClinicService']) {
