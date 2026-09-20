@@ -14,6 +14,7 @@ export default function ClinicAppointmentsAdmin({ clinicId }) {
   const [appointments, setAppointments] = useState([])
   const [status, setStatus] = useState('loading')
   const [actionId, setActionId] = useState(null)
+  const [actionError, setActionError] = useState('')
 
   const load = async () => {
     try {
@@ -31,9 +32,12 @@ export default function ClinicAppointmentsAdmin({ clinicId }) {
 
   const handleTransition = async (appointmentId, nextStatus) => {
     setActionId(appointmentId)
+    setActionError('')
     try {
       await transitionAppointment(clinicId, appointmentId, nextStatus)
       await load()
+    } catch (error) {
+      setActionError(error?.code === 'failed-precondition' ? t('appointmentTransitionError') : t('appointmentUpdateError'))
     } finally {
       setActionId(null)
     }
@@ -45,8 +49,9 @@ export default function ClinicAppointmentsAdmin({ clinicId }) {
 
   return (
     <div className="space-y-4">
+      {actionError && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">{actionError}</p>}
       {appointments.map((appointment) => (
-        <article key={appointment.appointmentId} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <article key={appointment.appointmentId} aria-label={`${appointment.petName} ${appointment.date} ${appointment.time}`} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Info label={t('appointmentPet')} value={appointment.petName} />
