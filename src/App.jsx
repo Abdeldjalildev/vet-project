@@ -1,72 +1,67 @@
-import React, { useEffect } from 'react';
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import Services from './components/Services';
-import About from './components/About';
-import VetTips from './components/VetTips';
-import Faq from './components/Faq';
-import Footer from './components/Footer';
-import { Toaster } from 'react-hot-toast';
-import MainDashboardContainer from './components/MainDashboardContainer';
-import ClinicLogin from './components/ClinicLogin';
-import ClinicDashboard from './components/ClinicDashboard';
-import { useAuth } from './auth/AuthProvider';
+import { useAuth } from './auth/AuthProvider'
+import ClinicLogin from './components/ClinicLogin'
+import ClinicDashboard from './components/ClinicDashboard'
+import PublicClinicPage from './components/PublicClinicPage'
 
 function ClinicRoute() {
-  const { user, authLoading } = useAuth();
-  const path = window.location.pathname;
-
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (path === '/clinic/login' && user) {
-      window.location.replace('/clinic/dashboard');
-    }
-
-    if (path === '/clinic/dashboard' && !user) {
-      window.location.replace('/clinic/login');
-    }
-  }, [authLoading, path, user]);
+  const { user, authLoading } = useAuth()
+  const path = window.location.pathname
 
   if (authLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-gray-950">
         <p className="text-sm font-semibold text-slate-600 dark:text-gray-300">Checking clinic session…</p>
       </main>
-    );
+    )
   }
 
   if (path === '/clinic/login') {
-    return user ? null : <ClinicLogin />;
+    return user ? <Redirect path="/clinic/dashboard" /> : <ClinicLogin />
   }
 
   if (path === '/clinic/dashboard') {
-    return user ? <ClinicDashboard /> : null;
+    return user ? <ClinicDashboard /> : <Redirect path="/clinic/login" />
   }
 
-  return null;
+  return <Redirect path="/clinic/login" />
 }
 
-function PublicApp() {
-  return (
-    <div className="min-h-screen antialiased transition-colors duration-300 bg-slate-50 dark:bg-gray-900 text-slate-800 dark:text-gray-100">
-      <Toaster position="top-center" reverseOrder={false} />
-      <Navbar />
-      <main>
-        <Hero />
-        <MainDashboardContainer />
-        <Services />
-        <About />
-        <VetTips />
-        <Faq />
+function Redirect({ path }) {
+  window.location.replace(path)
+  return null
+}
+
+function getPublicClinicSlug() {
+  const segments = window.location.pathname.split('/').filter(Boolean)
+
+  if (segments[0] === 'c' && segments[1]) {
+    return decodeURIComponent(segments[1])
+  }
+
+  return import.meta.env.VITE_DEFAULT_CLINIC_SLUG || ''
+}
+
+function PublicRoute() {
+  const clinicSlug = getPublicClinicSlug()
+
+  if (!clinicSlug) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 dark:bg-gray-950">
+        <section className="max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl dark:border-gray-800 dark:bg-gray-900">
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white">VetLife</h1>
+          <p className="mt-3 text-sm text-slate-600 dark:text-gray-300">
+            Add a public clinic slug to the URL using <code>/c/&lt;clinicSlug&gt;</code>.
+          </p>
+        </section>
       </main>
-      <Footer />
-    </div>
-  );
+    )
+  }
+
+  return <PublicClinicPage clinicSlug={clinicSlug} />
 }
 
 export default function App() {
-  const isClinicRoute = window.location.pathname.startsWith('/clinic/');
-
-  return isClinicRoute ? <ClinicRoute /> : <PublicApp />;
+  return window.location.pathname.startsWith('/clinic/')
+    ? <ClinicRoute />
+    : <PublicRoute />
 }
