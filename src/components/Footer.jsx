@@ -29,6 +29,15 @@ export default function Footer({ clinic }) {
         </div>
 
         <div>
+          <h4 className="mb-3 font-bold text-white">{t('openingHours')}</h4>
+          <ul className="mb-6 space-y-2 text-sm">
+            {Object.entries(clinic.openingHours || {}).map(([day, hours]) => (
+              <li key={day} className="flex justify-between gap-4">
+                <span>{day}</span>
+                <span className="text-slate-300">{localized(hours, i18n.language)}</span>
+              </li>
+            ))}
+          </ul>
           <h4 className="mb-3 font-bold text-white">{t('socialLinks')}</h4>
           <div className="flex flex-wrap gap-3">
             {Object.entries(socialLinks).filter(([, url]) => Boolean(url)).map(([network, url]) => (
