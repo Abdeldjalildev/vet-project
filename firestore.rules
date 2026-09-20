@@ -18,57 +18,72 @@ service cloud.firestore {
         value.ar is string && value.en is string && value.fr is string;
     }
 
+    function validLocalizedIfPresent(data, field) {
+      return !(field in data) || validLocalized(data[field]);
+    }
+
     function validBranding() {
-      return request.resource.data.branding is map &&
+      return !('branding' in request.resource.data) || (
+        request.resource.data.branding is map &&
         request.resource.data.branding.keys().hasOnly(['primaryColor', 'accentColor']) &&
         request.resource.data.branding.primaryColor is string &&
         request.resource.data.branding.accentColor is string &&
         request.resource.data.branding.primaryColor.matches('^#[0-9A-Fa-f]{6}$') &&
-        request.resource.data.branding.accentColor.matches('^#[0-9A-Fa-f]{6}$');
+        request.resource.data.branding.accentColor.matches('^#[0-9A-Fa-f]{6}$')
+      );
     }
 
     function validManagedContent() {
-      return request.resource.data.hero is map &&
+      return (!('hero' in request.resource.data) || (
+        request.resource.data.hero is map &&
         request.resource.data.hero.keys().hasOnly(['badge', 'title', 'description']) &&
         validLocalized(request.resource.data.hero.badge) &&
         validLocalized(request.resource.data.hero.title) &&
-        validLocalized(request.resource.data.hero.description) &&
+        validLocalized(request.resource.data.hero.description)
+      )) &&
+      (!('about' in request.resource.data) || (
         request.resource.data.about is map &&
         request.resource.data.about.keys().hasOnly(['title', 'description', 'quote', 'features']) &&
         validLocalized(request.resource.data.about.title) &&
         validLocalized(request.resource.data.about.description) &&
         validLocalized(request.resource.data.about.quote) &&
-        request.resource.data.about.features is list &&
+        request.resource.data.about.features is list
+      )) &&
+      (!('footer' in request.resource.data) || (
         request.resource.data.footer is map &&
         request.resource.data.footer.keys().hasOnly(['about', 'copyright']) &&
         validLocalized(request.resource.data.footer.about) &&
-        validLocalized(request.resource.data.footer.copyright);
+        validLocalized(request.resource.data.footer.copyright)
+      ));
     }
 
     function validClinicPublicConfig() {
-      return validLocalized(request.resource.data.name) &&
-        validLocalized(request.resource.data.description) &&
-        validHttpsUrl(request.resource.data.logoUrl) &&
-        request.resource.data.contact is map &&
-        request.resource.data.contact.keys().hasOnly(['address', 'phone', 'email']) &&
-        validLocalized(request.resource.data.contact.address) &&
-        request.resource.data.contact.phone is string &&
-        request.resource.data.contact.email is string &&
-        (request.resource.data.contact.email == '' || request.resource.data.contact.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')) &&
-        request.resource.data.openingHours is map &&
-        validLocalized(request.resource.data.emergencyInformation) &&
+      return validLocalizedIfPresent(request.resource.data, 'name') &&
+        validLocalizedIfPresent(request.resource.data, 'description') &&
+        (!('logoUrl' in request.resource.data) || validHttpsUrl(request.resource.data.logoUrl)) &&
+        (!('contact' in request.resource.data) || (
+          request.resource.data.contact is map &&
+          request.resource.data.contact.keys().hasOnly(['address', 'phone', 'email']) &&
+          validLocalized(request.resource.data.contact.address) &&
+          request.resource.data.contact.phone is string &&
+          request.resource.data.contact.email is string &&
+          (request.resource.data.contact.email == '' || request.resource.data.contact.email.matches('^[^ @]+@[^ @]+[.][^ @]+$'))
+        )) &&
+        (!('openingHours' in request.resource.data) || request.resource.data.openingHours is map) &&
+        validLocalizedIfPresent(request.resource.data, 'emergencyInformation') &&
         validBranding() &&
         validManagedContent() &&
-        request.resource.data.socialLinks is map &&
-        request.resource.data.socialLinks.keys().hasOnly(['facebook', 'instagram', 'tiktok', 'youtube', 'whatsapp', 'website']) &&
-        validHttpsUrl(request.resource.data.socialLinks.facebook) &&
-        validHttpsUrl(request.resource.data.socialLinks.instagram) &&
-        validHttpsUrl(request.resource.data.socialLinks.tiktok) &&
-        validHttpsUrl(request.resource.data.socialLinks.youtube) &&
-        validHttpsUrl(request.resource.data.socialLinks.whatsapp) &&
-        validHttpsUrl(request.resource.data.socialLinks.website);
+        (!('socialLinks' in request.resource.data) || (
+          request.resource.data.socialLinks is map &&
+          request.resource.data.socialLinks.keys().hasOnly(['facebook', 'instagram', 'tiktok', 'youtube', 'whatsapp', 'website']) &&
+          validHttpsUrl(request.resource.data.socialLinks.facebook) &&
+          validHttpsUrl(request.resource.data.socialLinks.instagram) &&
+          validHttpsUrl(request.resource.data.socialLinks.tiktok) &&
+          validHttpsUrl(request.resource.data.socialLinks.youtube) &&
+          validHttpsUrl(request.resource.data.socialLinks.whatsapp) &&
+          validHttpsUrl(request.resource.data.socialLinks.website)
+        ));
     }
-
     function clinicUpdateFieldsAreAllowed() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'logoUrl', 'branding', 'contact', 'openingHours', 'emergencyInformation', 'hero', 'about', 'footer', 'socialLinks']);
     }
