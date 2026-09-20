@@ -118,7 +118,7 @@ service cloud.firestore {
           serviceFieldsAreAllowed() &&
           existingServiceValueIsValidOrAbsent();
 
-        allow delete: if memberOf(clinicId) && ownerOrAdmin();
+        allow delete: if false;
       }
 
       match /faqs/{faqId} {
