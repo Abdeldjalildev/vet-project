@@ -37,6 +37,29 @@ Phase 2 implementation is complete on GitHub. Runtime verification is intentiona
 
 Phase 3 implementation is complete on GitHub. Runtime verification is intentionally deferred with Phases 1–3 to preserve the agreed evidence-first closure workflow.
 
+### Phase 4 — Clinic Admin Dashboard
+- G4.1 Admin Shell — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G4.2 Dashboard Overview — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G4.3 Appointment Management — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G4.4 Services Management — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G4.5 Admin/Public Synchronization — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+
+### Phase 5 — Full Clinic Content & Configuration
+- G5.1 Clinic Profile — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G5.2 Branding — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G5.3 FAQ Management — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G5.4 Social/Footer Management — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G5.5 Content Contract — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+
+### Phase 6 — Multilingual System
+- G6.1 Admin System i18n — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G6.2 Public System i18n — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G6.3 Managed Content Translation — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G6.4 RTL/LTR Isolation — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G6.5 Persistence & Independence — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+
+Phase 4, Phase 5, and Phase 6 implementations are complete on GitHub. Runtime verification remains intentionally deferred so the planned combined verification pass can provide evidence before closure.
+
 
 
 ---
