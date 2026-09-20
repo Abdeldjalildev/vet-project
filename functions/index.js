@@ -44,7 +44,7 @@ function rejectUnknownFields(data, allowed, operation) {
 
 function validateOptionalEmail(value) {
   if (!value) return ''
-  if (value.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value)) {
+  if (value.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
     fail('invalid-argument', 'ownerEmail is invalid.')
   }
   return value
@@ -96,6 +96,13 @@ function normalizeBooking(data) {
   const ownerPhone = requireString(data.ownerPhone, 'ownerPhone', 40)
   const serviceId = requireDocumentId(data.serviceId, 'serviceId')
   const petType = requireString(data.petType, 'petType', 20)
+  if ('ownerEmail' in data && typeof data.ownerEmail !== 'string') {
+    fail('invalid-argument', 'ownerEmail must be a string when provided.')
+  }
+  if ('notes' in data && typeof data.notes !== 'string') {
+    fail('invalid-argument', 'notes must be a string when provided.')
+  }
+
   const ownerEmail = typeof data.ownerEmail === 'string' ? data.ownerEmail.trim() : ''
   const notes = typeof data.notes === 'string' ? data.notes.trim() : ''
 
