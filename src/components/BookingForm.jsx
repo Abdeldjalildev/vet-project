@@ -48,7 +48,7 @@ export default function BookingForm({ clinicId, services = [] }) {
 
     try {
       await createPublicAppointment(clinicId, validation.value)
-      await trackPublicEvent({ clinicId, eventType: 'booking_completed', page: 'booking' })
+      trackPublicEvent({ clinicId, eventType: 'booking_completed', page: 'booking' }).catch(() => {})
       toast.success(t('successMessage'))
       setSubmitError('')
       setFormData({
