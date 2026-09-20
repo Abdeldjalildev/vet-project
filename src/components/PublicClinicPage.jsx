@@ -13,7 +13,7 @@ import { Toaster } from 'react-hot-toast'
 import { trackPublicEvent, trackSessionStartOnce } from '../lib/analytics'
 
 export default function PublicClinicPage({ clinicSlug }) {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const [clinic, setClinic] = useState(null)
   const [services, setServices] = useState([])
   const [faqs, setFaqs] = useState([])
