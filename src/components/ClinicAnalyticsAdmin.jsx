@@ -40,6 +40,17 @@ export default function ClinicAnalyticsAdmin({ clinicId }) {
     bookingsCompleted: result.bookingsCompleted + (day.bookingsCompleted || 0),
   }), { visitors: 0, pageViews: 0, sessions: 0, bookingsCompleted: 0 }), [aggregates])
 
+  const revenueByCurrency = useMemo(() => {
+    const values = {}
+    aggregates.forEach((day) => {
+      const currency = day.revenueCurrency || 'DZD'
+      values[currency] = (values[currency] || 0) + (day.estimatedCompletedServiceValue || 0)
+    })
+    return Object.entries(values).sort(([a], [b]) => a.localeCompare(b))
+  }, [aggregates])
+
+  const completedServices = aggregates.reduce((sum, day) => sum + (day.completedServices || 0), 0)
+
   const conversion = totals.sessions > 0
     ? Math.round((totals.bookingsCompleted / totals.sessions) * 1000) / 10
     : 0
@@ -79,7 +90,20 @@ export default function ClinicAnalyticsAdmin({ clinicId }) {
         <Metric label={t('analyticsPageViews')} value={totals.pageViews} />
         <Metric label={t('analyticsSessions')} value={totals.sessions} />
         <Metric label={t('analyticsBookings')} value={totals.bookingsCompleted} />
+        <Metric label={t('analyticsCompletedServices')} value={completedServices} />
         <Metric label={t('analyticsConversion')} value={`${conversion}%`} />
+      </section>
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <h4 className="text-lg font-black">{t('analyticsEstimatedRevenue')}</h4>
+        <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">{t('analyticsEstimatedRevenueHint')}</p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          {revenueByCurrency.length === 0 ? <Empty text={t('analyticsNoRevenue')} /> : revenueByCurrency.map(([currency, value]) => (
+            <div key={currency} className="rounded-2xl bg-slate-100 px-5 py-4 dark:bg-gray-800">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400">{currency}</p>
+              <p className="mt-1 text-2xl font-black">{value.toFixed(2)}</p>
+            </div>
+          ))}
+        </div>
       </section>
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <ListCard title={t('analyticsPopularPages')}>
