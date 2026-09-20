@@ -1,23 +1,142 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function membershipExists() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
-    function membership() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
-    function activeMember() { return membershipExists() && membership().status == 'active'; }
-    function memberOf(clinicId) { return activeMember() && membership().clinicId == clinicId; }
-    function ownerOrAdmin() { return activeMember() && (membership().role == 'owner' || membership().role == 'admin'); }
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function membershipExists() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function membership() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function activeMember() {
+      return membershipExists() && membership().status == 'active';
+    }
+
+    function memberOf(clinicId) {
+      return activeMember() && membership().clinicId == clinicId;
+    }
+
+    function ownerOrAdmin() {
+      return activeMember() &&
+        (membership().role == 'owner' || membership().role == 'admin');
+    }
+
+    function publicClinic(clinicId) {
+      return get(/databases/$(database)/documents/clinics/$(clinicId)).data.public == true;
+    }
+
+    function activePublicClinic(clinicId) {
+      return publicClinic(clinicId) &&
+        get(/databases/$(database)/documents/clinics/$(clinicId)).data.active == true;
+    }
+
+    function validPublicAppointment(clinicId) {
+      return activePublicClinic(clinicId) &&
+        request.resource.data.keys().hasAll([
+          'clinicId',
+          'petName',
+          'petType',
+          'ownerName',
+          'ownerPhone',
+          'ownerEmail',
+          'serviceId',
+          'date',
+          'time',
+          'notes',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'clinicId',
+          'petName',
+          'petType',
+          'ownerName',
+          'ownerPhone',
+          'ownerEmail',
+          'serviceId',
+          'date',
+          'time',
+          'notes',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        request.resource.data.clinicId == clinicId &&
+        request.resource.data.petName is string &&
+        request.resource.data.petName.size() > 0 &&
+        request.resource.data.petName.size() <= 120 &&
+        request.resource.data.petType is string &&
+        request.resource.data.petType in ['cat', 'dog', 'bird', 'other'] &&
+        request.resource.data.ownerName is string &&
+        request.resource.data.ownerName.size() > 0 &&
+        request.resource.data.ownerName.size() <= 160 &&
+        request.resource.data.ownerPhone is string &&
+        request.resource.data.ownerPhone.size() > 0 &&
+        request.resource.data.ownerPhone.size() <= 40 &&
+        request.resource.data.ownerEmail is string &&
+        request.resource.data.ownerEmail.size() <= 254 &&
+        request.resource.data.serviceId is string &&
+        exists(/databases/$(database)/documents/clinics/$(clinicId)/services/$(request.resource.data.serviceId)) &&
+        get(/databases/$(database)/documents/clinics/$(clinicId)/services/$(request.resource.data.serviceId)).data.active == true &&
+        request.resource.data.date is string &&
+        request.resource.data.date.size() == 10 &&
+        request.resource.data.time is string &&
+        request.resource.data.time.size() == 5 &&
+        request.resource.data.notes is string &&
+        request.resource.data.notes.size() <= 2000 &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time;
+    }
+
     match /clinics/{clinicId} {
       allow read: if resource.data.public == true || memberOf(clinicId);
       allow create: if false;
       allow update, delete: if memberOf(clinicId) && ownerOrAdmin();
-      match /services/{serviceId} { allow read: if resource.data.active == true || memberOf(clinicId); allow create, update, delete: if memberOf(clinicId) && ownerOrAdmin(); }
-      match /faqs/{faqId} { allow read: if resource.data.active == true || memberOf(clinicId); allow create, update, delete: if memberOf(clinicId) && ownerOrAdmin(); }
-      match /appointments/{appointmentId} { allow read: if memberOf(clinicId); allow create: if false; allow update, delete: if memberOf(clinicId) && ownerOrAdmin(); }
-      match /analyticsEvents/{eventId} { allow read: if memberOf(clinicId) && ownerOrAdmin(); allow create, update, delete: if false; }
-      match /analyticsAggregates/{aggregateId} { allow read: if memberOf(clinicId) && ownerOrAdmin(); allow create, update, delete: if false; }
+
+      match /services/{serviceId} {
+        allow read: if resource.data.active == true || memberOf(clinicId);
+        allow create, update, delete: if memberOf(clinicId) && ownerOrAdmin();
+      }
+
+      match /faqs/{faqId} {
+        allow read: if resource.data.active == true || memberOf(clinicId);
+        allow create, update, delete: if memberOf(clinicId) && ownerOrAdmin();
+      }
+
+      match /appointments/{appointmentId} {
+        allow read: if memberOf(clinicId);
+        allow create: if validPublicAppointment(clinicId);
+        allow update, delete: if memberOf(clinicId) && ownerOrAdmin();
+      }
+
+      match /analyticsEvents/{eventId} {
+        allow read: if memberOf(clinicId) && ownerOrAdmin();
+        allow create, update, delete: if false;
+      }
+
+      match /analyticsAggregates/{aggregateId} {
+        allow read: if memberOf(clinicId) && ownerOrAdmin();
+        allow create, update, delete: if false;
+      }
     }
-    match /users/{uid} { allow read: if signedIn() && request.auth.uid == uid; allow create, delete: if false; allow update: if false; }
-    match /{document=**} { allow read, write: if false; }
+
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create, delete: if false;
+      allow update: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
