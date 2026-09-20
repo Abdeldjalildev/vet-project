@@ -85,7 +85,7 @@ export default function ClinicAnalyticsAdmin({ clinicId }) {
         <h3 className="text-2xl font-black">{t('analyticsTitle')}</h3>
         <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">{t('analyticsLast30Days')}</p>
       </div>
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
         <Metric label={t('analyticsVisitors')} value={totals.visitors} />
         <Metric label={t('analyticsPageViews')} value={totals.pageViews} />
         <Metric label={t('analyticsSessions')} value={totals.sessions} />
