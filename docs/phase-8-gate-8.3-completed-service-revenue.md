@@ -7,9 +7,10 @@ When an appointment transitions to completed, the trusted lifecycle function agg
 
 Fields:
 - completedServices
-- estimatedCompletedServiceValue
-- revenueCurrency
+- estimatedCompletedServiceValueByCurrency (currency-keyed map)
 - revenueUpdatedAt
+
+Completed-service value is accumulated independently per currency; the aggregate never combines numeric values from different currencies.
 
 The aggregation occurs in the same trusted transaction as the completed status transition.
 
