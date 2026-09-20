@@ -181,6 +181,121 @@ exports.createPublicAppointment = onCall({ region: 'us-central1' }, async (reque
   return { appointmentId: result, status: 'pending' }
 })
 
+
+
+const ANALYTICS_EVENT_TYPES = new Set([
+  'page_view',
+  'session_start',
+  'booking_started',
+  'booking_completed',
+  'service_view',
+])
+
+const ANALYTICS_ALLOWED_PAGES = new Set([
+  'home',
+  'services',
+  'faq',
+  'booking',
+])
+
+const safeDimensionKey = (value) =>
+  Buffer.from(String(value || ''), 'utf8').toString('base64url').slice(0, 120)
+
+function validateAnalyticsPayload(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    fail('invalid-argument', 'Analytics payload is invalid.')
+  }
+
+  const clinicId = requireString(data.clinicId, 'clinicId', 128)
+  const eventType = requireString(data.eventType, 'eventType', 40)
+  const page = requireString(data.page, 'page', 80)
+  const sessionId = requireString(data.sessionId, 'sessionId', 128)
+  const visitorId = requireString(data.visitorId, 'visitorId', 128)
+  const language = requireString(data.language, 'language', 10)
+  const deviceType = requireString(data.deviceType || 'unknown', 'deviceType', 20)
+  const serviceId = typeof data.serviceId === 'string' ? data.serviceId.trim() : ''
+
+  if (!ANALYTICS_EVENT_TYPES.has(eventType)) fail('invalid-argument', 'Analytics event type is invalid.')
+  if (!ANALYTICS_ALLOWED_PAGES.has(page)) fail('invalid-argument', 'Analytics page is invalid.')
+  if (!/^[a-z]{2}$/.test(language)) fail('invalid-argument', 'Analytics language is invalid.')
+  if (serviceId.length > 128) fail('invalid-argument', 'Analytics service identifier is invalid.')
+
+  return { clinicId, eventType, page, sessionId, visitorId, language, deviceType, serviceId }
+}
+
+exports.recordAnalyticsEvent = onCall({ region: 'us-central1' }, async (request) => {
+  const event = validateAnalyticsPayload(request.data)
+  const clinicRef = clinics.doc(event.clinicId)
+  const date = new Date().toISOString().slice(0, 10)
+  const eventRef = clinicRef.collection('analyticsEvents').doc()
+  const aggregateRef = clinicRef.collection('analyticsAggregates').doc(date)
+  const visitorRef = clinicRef.collection('analyticsVisitors').doc(
+    `${date}_${safeDimensionKey(event.visitorId)}`,
+  )
+
+  await db.runTransaction(async (transaction) => {
+    const [clinicSnapshot, visitorSnapshot] = await Promise.all([
+      transaction.get(clinicRef),
+      transaction.get(visitorRef),
+    ])
+
+    if (!clinicSnapshot.exists || clinicSnapshot.data().public !== true || clinicSnapshot.data().active !== true) {
+      fail('failed-precondition', 'Clinic is not available for analytics.')
+    }
+
+    transaction.create(eventRef, {
+      clinicId: event.clinicId,
+      eventType: event.eventType,
+      page: event.page,
+      serviceId: event.serviceId,
+      timestamp: FieldValue.serverTimestamp(),
+      sessionId: event.sessionId,
+      language: event.language,
+      deviceType: event.deviceType,
+    })
+
+    const aggregateUpdate = {
+      clinicId: event.clinicId,
+      date,
+      updatedAt: FieldValue.serverTimestamp(),
+    }
+
+    if (event.eventType === 'page_view') {
+      aggregateUpdate.pageViews = FieldValue.increment(1)
+      aggregateUpdate[`pages.${safeDimensionKey(event.page)}`] = FieldValue.increment(1)
+    }
+
+    if (event.eventType === 'session_start') {
+      aggregateUpdate.sessions = FieldValue.increment(1)
+    }
+
+    if (event.eventType === 'booking_started') {
+      aggregateUpdate.bookingsStarted = FieldValue.increment(1)
+    }
+
+    if (event.eventType === 'service_view' && event.serviceId) {
+      aggregateUpdate[`services.${safeDimensionKey(event.serviceId)}`] = FieldValue.increment(1)
+    }
+
+    if (event.eventType === 'booking_completed') {
+      aggregateUpdate.bookingsCompleted = FieldValue.increment(1)
+    }
+
+    if (!visitorSnapshot.exists) {
+      transaction.create(visitorRef, {
+        visitorId: event.visitorId,
+        date,
+        createdAt: FieldValue.serverTimestamp(),
+      })
+      aggregateUpdate.uniqueVisitors = FieldValue.increment(1)
+    }
+
+    transaction.set(aggregateRef, aggregateUpdate, { merge: true })
+  })
+
+  return { recorded: true }
+})
+
 exports.transitionAppointment = onCall({ region: 'us-central1' }, async (request) => {
   if (!request.auth) fail('unauthenticated', 'Authentication is required.')
 
