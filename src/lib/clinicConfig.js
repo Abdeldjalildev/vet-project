@@ -1,16 +1,11 @@
-import { addDoc, deleteDoc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore'
-import { clinicFaqsRef, clinicRef } from './firestore'
+import { addDoc, deleteDoc, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore'
+import { clinicFaqsRef, clinicRef, firestore } from './firestore'
 
 const localized = (value) => ({
   ar: typeof value?.ar === 'string' ? value.ar.trim() : '',
   en: typeof value?.en === 'string' ? value.en.trim() : '',
   fr: typeof value?.fr === 'string' ? value.fr.trim() : '',
 })
-
-export const getClinicConfiguration = async (clinicId) => {
-  const snapshot = await getDocs(query(clinicFaqsRef(clinicId), orderBy('order', 'asc')))
-  return { faqs: snapshot.docs.map((document) => ({ faqId: document.id, ...document.data() })) }
-}
 
 export const updateClinicProfile = (clinicId, input) =>
   updateDoc(clinicRef(clinicId), {
@@ -76,16 +71,12 @@ export const createClinicFaq = (clinicId, input) =>
   })
 
 export const updateClinicFaq = (clinicId, faqId, input) =>
-  updateDoc(faqsDoc(clinicId, faqId), {
+  updateDoc(doc(firestore, 'clinics', clinicId, 'faqs', faqId), {
     question: localized(input.question),
     answer: localized(input.answer),
     order: Number.isFinite(input.order) ? input.order : 0,
     active: input.active !== false,
   })
 
-export const deleteClinicFaq = (clinicId, faqId) => deleteDoc(faqsDoc(clinicId, faqId))
-
-const faqsDoc = (clinicId, faqId) => {
-  const collectionRef = clinicFaqsRef(clinicId)
-  return { ...collectionRef, path: `${collectionRef.path}/${faqId}` }
-}
+export const deleteClinicFaq = (clinicId, faqId) =>
+  deleteDoc(doc(firestore, 'clinics', clinicId, 'faqs', faqId))
