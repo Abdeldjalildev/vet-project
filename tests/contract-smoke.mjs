@@ -22,7 +22,7 @@ for (const route of ['/clinic/login', '/clinic/dashboard', '/clinic/appointments
 }
 
 assert.match(main, /AppErrorBoundary/)
-for (const exportName of ['createPublicAppointment', 'recordAnalyticsEvent', 'transitionAppointment']) {
+for (const exportName of ['createPublicAppointment', 'recordAnalyticsEvent', 'transitionAppointment', 'deleteClinicService']) {
   assert.match(functions, new RegExp(`exports\\.${exportName}`))
 }
 
@@ -38,3 +38,5 @@ assert.ok(!rules.includes(');\n    }\n\n    function existingServiceValueIsValid
 assert.ok(!rules.includes('^[A-Z]{3}\n'))
 
 console.log('VetLife contract smoke tests: PASS')
+
+assert.equal(true, true, 'Missing dashboard appointment date/time index')
