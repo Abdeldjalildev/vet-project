@@ -1,4 +1,4 @@
-import { addDoc, collection, getDocs, limit, orderBy, query, serverTimestamp, where } from 'firebase/firestore'
+import { getDocs, limit, orderBy, query } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { getFunctions } from 'firebase/functions'
 import { firebaseApp } from './firebase'
@@ -32,7 +32,6 @@ export const listClinicAppointments = async (clinicId) => {
     query(
       clinicAppointmentsRef(clinicId),
       orderBy('date', 'desc'),
-      orderBy('time', 'desc'),
       limit(100),
     ),
   )
