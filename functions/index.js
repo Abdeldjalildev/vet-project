@@ -235,10 +235,13 @@ exports.recordAnalyticsEvent = onCall({ region: 'us-central1' }, async (request)
   )
 
   await db.runTransaction(async (transaction) => {
-    const [clinicSnapshot, visitorSnapshot] = await Promise.all([
+    const [clinicSnapshot, visitorSnapshot, eventSnapshot] = await Promise.all([
       transaction.get(clinicRef),
       transaction.get(visitorRef),
+      transaction.get(eventRef),
     ])
+
+    if (eventSnapshot.exists) return
 
     if (!clinicSnapshot.exists || clinicSnapshot.data().public !== true || clinicSnapshot.data().active !== true) {
       fail('failed-precondition', 'Clinic is not available for analytics.')
