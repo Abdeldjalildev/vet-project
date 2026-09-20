@@ -5,7 +5,7 @@
 
 Acceptance contract:
 - users can understand loading/error/empty states;
-- recoverable failures provide a next action;
+- recoverable failures provide a next action, including retry actions for admin data loading;
 - forms communicate submission state;
 - booking conflicts explain why a new slot is required;
 - admin mutation failures do not silently disappear;
