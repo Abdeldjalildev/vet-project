@@ -14,6 +14,7 @@ const translations = {
     authNetworkError: 'تعذر تسجيل الدخول بسبب مشكلة في الشبكة. تحقق من الاتصال وحاول مرة أخرى.',
     authSignInFailed: 'فشل تسجيل الدخول. حاول مرة أخرى.',
     adminNavigation: 'التنقل في لوحة العيادة',
+    day_monday: 'الاثنين', day_tuesday: 'الثلاثاء', day_wednesday: 'الأربعاء', day_thursday: 'الخميس', day_friday: 'الجمعة', day_saturday: 'السبت', day_sunday: 'الأحد',
   },
   en: {
     language: 'Language',
@@ -28,6 +29,7 @@ const translations = {
     authNetworkError: 'A network error prevented sign-in. Check your connection and try again.',
     authSignInFailed: 'Sign-in failed. Please try again.',
     adminNavigation: 'Clinic navigation',
+    day_monday: 'Monday', day_tuesday: 'Tuesday', day_wednesday: 'Wednesday', day_thursday: 'Thursday', day_friday: 'Friday', day_saturday: 'Saturday', day_sunday: 'Sunday',
   },
   fr: {
     language: 'Langue',
@@ -42,6 +44,7 @@ const translations = {
     authNetworkError: 'Un problème réseau a empêché la connexion. Vérifiez votre connexion puis réessayez.',
     authSignInFailed: 'La connexion a échoué. Réessayez.',
     adminNavigation: 'Navigation de la clinique',
+    day_monday: 'Lundi', day_tuesday: 'Mardi', day_wednesday: 'Mercredi', day_thursday: 'Jeudi', day_friday: 'Vendredi', day_saturday: 'Samedi', day_sunday: 'Dimanche',
   },
 }
 
