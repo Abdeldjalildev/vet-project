@@ -2,7 +2,7 @@
 
 **Gate:** G1.1 — Firebase Integration  
 **Phase:** Phase 1 — Firebase Foundation  
-**Status:** OPEN — IMPLEMENTATION SCAFFOLD COMPLETE; EXTERNAL CONFIGURATION/INSTALL VERIFICATION REQUIRED  
+**Status:** CLOSED — REPOSITORY AND LOCAL DEPENDENCY/BUILD VERIFICATION COMPLETED  
 **Repository:** `Abdeldjalildev/vet-project`  
 **Depends on:** Phase 0 Architecture Freeze
 
@@ -112,18 +112,11 @@ PASS:
 - Initialization is idempotent for HMR.
 - Auth/Firestore implementation has not leaked into this gate.
 
-### NOT VERIFIED
+### Recorded local verification
 
-The following require the project owner's local environment and an actual Firebase Web App configuration:
+The repository owner subsequently synchronized the lockfile with `npm ci` and verified the production Vite build successfully. The working tree was clean and synchronized with `origin/main` after the dependency update.
 
-1. Install/synchronize the new `firebase` dependency and lockfile.
-2. Create/select the intended Firebase project.
-3. Register the VetLife Web App.
-4. Populate local `.env.local` from the Firebase Web App configuration.
-5. Run the existing Vite build/lint checks with the installed dependency.
-6. Confirm the application can import `src/lib/firebase.js` successfully.
-
-These cannot be truthfully marked PASS from GitHub repository inspection alone.
+Firebase Console project selection and Web App configuration remain part of the external runtime verification required by the later Phase 1 gates; they are not inferred from repository inspection.
 
 ## 5. Important Lockfile Note
 
