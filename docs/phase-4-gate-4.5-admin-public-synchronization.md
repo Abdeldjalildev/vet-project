@@ -18,7 +18,7 @@ Implemented:
 - public service ordering uses the stored order field;
 - inactive services are excluded from the public subscription.
 
-The appointment management interface also operates on the same clinic-owned appointment records already used by public booking.
+The appointment management interface also operates on the same clinic-owned appointment records already used by public booking. Service deletion is intentionally a trusted operation because historical appointment references must be protected from client-side check/delete races.
 
 ## Runtime evidence required
 - create/edit/activate/deactivate a service in admin;
