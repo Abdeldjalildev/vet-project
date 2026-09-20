@@ -97,7 +97,7 @@ export default function ClinicServicesAdmin({ clinicId }) {
       await deleteClinicService(clinicId, service.serviceId)
       await load()
     } catch (deleteError) {
-      setError(deleteError.message || 'SERVICE_DELETE_FAILED')
+      setError(deleteError.message === 'SERVICE_IN_USE' ? t('serviceInUse') : (deleteError.message || 'SERVICE_DELETE_FAILED'))
     }
   }
 
