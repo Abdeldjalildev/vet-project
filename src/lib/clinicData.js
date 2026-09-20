@@ -18,14 +18,13 @@ export const getPublicClinicBySlug = async (slug) => {
       clinicsRef,
       where('public', '==', true),
       where('active', '==', true),
+      where('slug', '==', slug),
     ),
   )
-  const clinic = snapshot.docs
-    .map((document) => ({ clinicId: document.id, ...document.data() }))
-    .find((item) => item.slug === slug)
+  const clinic = snapshot.docs[0]
 
   if (!clinic) throw new Error('CLINIC_NOT_FOUND')
-  return clinic
+  return { clinicId: clinic.id, ...clinic.data() }
 }
 
 export const subscribePublicClinic = (clinicId, { onClinic, onServices, onFaqs, onError }) => {
