@@ -13,7 +13,7 @@
 
 ## Repository work completed
 - reviewed Firebase Authentication and protected-route boundaries;
-- reviewed clinic membership authorization;
+- reviewed clinic membership authorization and repaired the protected-read role boundary;
 - reviewed Firestore Rules and trusted Cloud Function boundaries;
 - hardened trusted-function input allowlists;
 - added document-ID validation;
