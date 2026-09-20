@@ -12,7 +12,8 @@ Validation is deliberately split across two trust boundaries:
 - lengths
 - date
 - time
-- email/notes length
+- email syntax/length
+- strict optional field types for `ownerEmail` and `notes`
 
 ### Trusted server
 `functions/index.js` independently validates:
