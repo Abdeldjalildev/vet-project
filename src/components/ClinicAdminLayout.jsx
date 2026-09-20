@@ -63,7 +63,7 @@ export default function ClinicAdminLayout({ section, children }) {
   }
 
   if (status === 'loading') return <AdminState message={t('adminLoading')} />
-  if (status !== 'ready') return <AdminState message={t('adminAccessError')} />
+  if (status !== 'ready') return <AdminState message={t('adminAccessError')} retry={load} />
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-gray-950 dark:text-white">
@@ -155,7 +155,7 @@ function AdminState({ message }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-6 dark:bg-gray-950">
       <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <p className="text-sm font-semibold text-slate-600 dark:text-gray-300">{message}</p>
+        <p role="alert" className="text-sm font-semibold text-slate-600 dark:text-gray-300">{message}</p>{retry && <button type="button" onClick={retry} className="mt-5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white">{t('retry')}</button>}
       </section>
     </main>
   )
