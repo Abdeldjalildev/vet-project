@@ -45,6 +45,7 @@ assert.match(rules, /currency\.matches\('\^\[A-Z\]\{3\}\$'/)
 
 assert.ok(!rules.includes(');\n    }\n\n    function existingServiceValueIsValidOrAbsent'))
 assert.ok(!rules.includes('^[A-Z]{3}\n'))
+assert.ok(!rules.includes('existingServiceValueIsValidOrAbsent'))
 
 
 assert.match(rules, /'description'/)
