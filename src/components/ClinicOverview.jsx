@@ -35,8 +35,22 @@ export default function ClinicOverview({ clinicId }) {
   if (status === 'loading') return <State message={t('adminLoading')} />
   if (status === 'error') return <State message={t('adminOverviewError')} />
 
+  const now = new Date()
+  const today = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-')
+  const currentTime = [
+    String(now.getHours()).padStart(2, '0'),
+    String(now.getMinutes()).padStart(2, '0'),
+  ].join(':')
+
   const upcoming = appointments
-    .filter((item) => ['pending', 'confirmed'].includes(item.status))
+    .filter((item) =>
+      ['pending', 'confirmed'].includes(item.status) &&
+      `${item.date}T${item.time}` >= `${today}T${currentTime}`,
+    )
     .slice(0, 5)
 
   return (
