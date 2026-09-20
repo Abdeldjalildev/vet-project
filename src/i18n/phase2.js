@@ -15,6 +15,7 @@ const phase2Translations = {
     bookingError: 'تعذر إرسال الحجز. يرجى المحاولة مرة أخرى.',
     poweredByVetLife: 'مدعوم بواسطة VetLife',
     socialLinks: 'روابط التواصل',
+    openingHours: 'ساعات العمل',
   },
   en: {
     language: 'Language',
@@ -30,6 +31,7 @@ const phase2Translations = {
     bookingError: 'We could not submit the booking. Please try again.',
     poweredByVetLife: 'Powered by VetLife',
     socialLinks: 'Social links',
+    openingHours: 'Opening hours',
   },
   fr: {
     language: 'Langue',
@@ -45,6 +47,7 @@ const phase2Translations = {
     bookingError: 'Impossible d’envoyer le rendez-vous. Veuillez réessayer.',
     poweredByVetLife: 'Propulsé par VetLife',
     socialLinks: 'Réseaux sociaux',
+    openingHours: 'Horaires d’ouverture',
   },
 }
 
