@@ -40,6 +40,7 @@ export const trackAnalyticsEvent = async ({
   sessionId,
   visitorId,
   language,
+  eventId = crypto.randomUUID(),
 }) => {
   const callable = httpsCallable(functions, 'recordAnalyticsEvent')
   return callable({
@@ -51,7 +52,7 @@ export const trackAnalyticsEvent = async ({
     visitorId,
     language,
     deviceType: window.matchMedia('(pointer: coarse)').matches ? 'touch' : 'pointer',
-    eventId: crypto.randomUUID(),
+    eventId,
   })
 }
 
