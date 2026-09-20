@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Services from './components/Services';
@@ -16,6 +16,18 @@ function ClinicRoute() {
   const { user, authLoading } = useAuth();
   const path = window.location.pathname;
 
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (path === '/clinic/login' && user) {
+      window.location.replace('/clinic/dashboard');
+    }
+
+    if (path === '/clinic/dashboard' && !user) {
+      window.location.replace('/clinic/login');
+    }
+  }, [authLoading, path, user]);
+
   if (authLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-gray-950">
@@ -25,21 +37,11 @@ function ClinicRoute() {
   }
 
   if (path === '/clinic/login') {
-    if (user) {
-      window.location.replace('/clinic/dashboard');
-      return null;
-    }
-
-    return <ClinicLogin />;
+    return user ? null : <ClinicLogin />;
   }
 
   if (path === '/clinic/dashboard') {
-    if (!user) {
-      window.location.replace('/clinic/login');
-      return null;
-    }
-
-    return <ClinicDashboard />;
+    return user ? <ClinicDashboard /> : null;
   }
 
   return null;
