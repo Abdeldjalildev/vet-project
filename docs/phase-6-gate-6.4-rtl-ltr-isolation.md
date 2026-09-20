@@ -10,7 +10,7 @@ Arabic uses RTL and English/French use LTR without leaking direction state betwe
 - The active i18n language listener sets the document language.
 - Arabic sets document direction to rtl.
 - English and French set document direction to ltr.
-- Direction is derived from the active interface language on application boot.
+- Direction is derived from the active interface language on application boot. The same listener updates `document.documentElement.lang` and `dir` when the active interface language changes.
 - Public and admin interfaces use separate persisted language keys.
 
 ## Isolation model
