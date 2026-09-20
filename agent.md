@@ -94,6 +94,15 @@ Phase 9 implementation is complete on GitHub. Runtime/browser verification remai
 
 ---
 
+### Phase 10 — Security Hardening
+- G10.1 Authentication Security — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G10.2 Authorization — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G10.3 Firestore Rules — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G10.4 Server Validation — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G10.5 Security Audit — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+
+Phase 10 implementation is complete on GitHub. Runtime security verification remains intentionally deferred; no Phase 10 gate is considered CLOSED until the planned combined Firebase/Emulator verification pass provides evidence.
+
 ## 1. Mission
 
 VetLife is being transformed into a real product that can be customized and sold to veterinary clinics.

@@ -30,6 +30,26 @@ function requireString(value, field, maxLength) {
   return normalized
 }
 
+function requireDocumentId(value, field) {
+  const normalized = requireString(value, field, 128)
+  if (normalized.includes('/')) fail('invalid-argument', `${field} is invalid.`)
+  return normalized
+}
+
+function rejectUnknownFields(data, allowed, operation) {
+  for (const key of Object.keys(data || {})) {
+    if (!allowed.has(key)) fail('invalid-argument', 'Unsupported ' + operation + ' field: ' + key)
+  }
+}
+
+function validateOptionalEmail(value) {
+  if (!value) return ''
+  if (value.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value)) {
+    fail('invalid-argument', 'ownerEmail is invalid.')
+  }
+  return value
+}
+
 function validateDate(date) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) fail('invalid-argument', 'date must use YYYY-MM-DD.')
   const parsed = new Date(`${date}T00:00:00Z`)
@@ -70,14 +90,16 @@ function normalizeBooking(data) {
     if (!allowed.has(key)) fail('invalid-argument', `Unsupported booking field: ${key}`)
   }
 
-  const clinicId = requireString(data.clinicId, 'clinicId', 128)
+  const clinicId = requireDocumentId(data.clinicId, 'clinicId')
   const petName = requireString(data.petName, 'petName', 120)
   const ownerName = requireString(data.ownerName, 'ownerName', 160)
   const ownerPhone = requireString(data.ownerPhone, 'ownerPhone', 40)
-  const serviceId = requireString(data.serviceId, 'serviceId', 128)
+  const serviceId = requireDocumentId(data.serviceId, 'serviceId')
   const petType = requireString(data.petType, 'petType', 20)
   const ownerEmail = typeof data.ownerEmail === 'string' ? data.ownerEmail.trim() : ''
   const notes = typeof data.notes === 'string' ? data.notes.trim() : ''
+
+  validateOptionalEmail(ownerEmail)
 
   if (!['cat', 'dog', 'bird', 'other'].includes(petType)) {
     fail('invalid-argument', 'petType is invalid.')
@@ -217,9 +239,10 @@ function validateAnalyticsPayload(data) {
   const page = requireString(data.page, 'page', 80)
   const sessionId = requireString(data.sessionId, 'sessionId', 128)
   const visitorId = requireString(data.visitorId, 'visitorId', 128)
+  if (visitorId.includes('/')) fail('invalid-argument', 'visitorId is invalid.')
   const language = requireString(data.language, 'language', 10)
   const deviceType = requireString(data.deviceType || 'unknown', 'deviceType', 20)
-  const eventId = requireString(data.eventId, 'eventId', 128)
+  const eventId = requireDocumentId(data.eventId, 'eventId')
   const serviceId = typeof data.serviceId === 'string' ? data.serviceId.trim() : ''
 
   if (!ANALYTICS_EVENT_TYPES.has(eventType)) fail('invalid-argument', 'Analytics event type is invalid.')
@@ -231,6 +254,7 @@ function validateAnalyticsPayload(data) {
 }
 
 exports.recordAnalyticsEvent = onCall({ region: 'us-central1' }, async (request) => {
+  rejectUnknownFields(request.data, new Set(['clinicId', 'eventType', 'page', 'sessionId', 'visitorId', 'language', 'deviceType', 'eventId', 'serviceId']), 'analytics')
   const event = validateAnalyticsPayload(request.data)
   const clinicRef = clinics.doc(event.clinicId)
   const date = new Date().toISOString().slice(0, 10)
@@ -310,8 +334,9 @@ exports.transitionAppointment = onCall({ region: 'us-central1' }, async (request
   if (!request.auth) fail('unauthenticated', 'Authentication is required.')
 
   const membership = await getActiveMembership(request.auth.uid)
-  const clinicId = requireString(request.data?.clinicId, 'clinicId', 128)
-  const appointmentId = requireString(request.data?.appointmentId, 'appointmentId', 128)
+  rejectUnknownFields(request.data, new Set(['clinicId', 'appointmentId', 'status']), 'appointment transition')
+  const clinicId = requireDocumentId(request.data?.clinicId, 'clinicId')
+  const appointmentId = requireDocumentId(request.data?.appointmentId, 'appointmentId')
   const nextStatus = requireString(request.data?.status, 'status', 20)
 
   if (membership.clinicId !== clinicId) {

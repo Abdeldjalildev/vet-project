@@ -42,7 +42,7 @@ export default function ClinicLogin() {
   }
 
   return (
-    <main className="min-h-screen" aria-labelledby="clinic-login-title" bg-slate-50 px-6 py-16 dark:bg-gray-950">
+    <main className="min-h-screen bg-slate-50 px-6 py-16 dark:bg-gray-950" aria-labelledby="clinic-login-title">
       <section className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
