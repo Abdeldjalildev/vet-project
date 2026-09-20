@@ -10,7 +10,7 @@
 | 2.1 Clinic Configuration | IMPLEMENTED | Public clinic lookup, branding, contact, address, hours, social links |
 | 2.2 Dynamic Services | IMPLEMENTED | Firestore active/order service loading and booking service IDs |
 | 2.3 Dynamic Content | IMPLEMENTED | Firestore-driven Hero/About/FAQ/Footer/social content |
-| 2.4 Public Booking | IMPLEMENTED | Firestore appointment creation with rules-enforced public validation |
+| 2.4 Public Booking | IMPLEMENTED | Public booking is submitted through the trusted `createPublicAppointment` Cloud Function; direct client appointment creation is denied by Firestore Rules |
 | 2.5 Synchronization | IMPLEMENTED | Firestore snapshot listeners for clinic/services/FAQs |
 
 ## Important boundary
