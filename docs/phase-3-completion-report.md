@@ -30,6 +30,7 @@ Phase 3 does not implement:
 - analytics;
 - revenue;
 - full scheduling calendar/duration engine;
+- analytics/revenue as Phase 3 product domains (later phases extend the trusted appointment lifecycle with analytics/revenue aggregation);
 - production deployment verification.
 
 Those remain later roadmap phases.
