@@ -34,7 +34,7 @@ export default function ClinicLogin() {
 
     try {
       await signIn(email, password)
-      window.location.assign('/clinic/dashboard')
+      window.location.assign('/')
     } catch (error) {
       setErrorMessage(getAuthErrorMessage(error))
       setIsSubmitting(false)
