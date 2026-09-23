@@ -49,7 +49,7 @@ assert.match(app, /path.startsWith\('\/platform\/'\)/)
 assert.match(app, /path.startsWith\('\/c\/'\)/)
 
 assert.match(main, /AppErrorBoundary/)
-for (const exportName of ['createPublicAppointment', 'recordAnalyticsEvent', 'transitionAppointment', 'deleteClinicService', 'provisionClinic', 'listProvisionedClinics']) {
+for (const exportName of ['createPublicAppointment', 'recordAnalyticsEvent', 'transitionAppointment', 'deleteClinicService', 'provisionClinic', 'listProvisionedClinics', 'completeClinicPasswordSetup']) {
   assert.match(functions, new RegExp(`exports\\.${exportName}`))
 }
 
@@ -124,3 +124,13 @@ assert.match(footer, /Vet.*Life/)
 assert.match(publicClinic, /<VetTips \/>/)
 assert.match(publicClinic, /<BookingForm[^>]+clinic=/)
 assert.match(publicClinic, /<Footer clinic=/)
+
+assert.match(functions, /temporaryPassword/)
+assert.match(functions, /mustChangePassword: true/)
+assert.match(functions, /completeClinicPasswordSetup/)
+assert.match(auth, /updatePassword/)
+assert.match(auth, /getClinicMembership/)
+assert.match(platformDashboard, /temporaryPassword/)
+assert.match(app, /\/clinic\/first-password/)
+assert.match(phase12I18n, /firstPasswordTitle/)
+console.log('VetLife first-login password setup contract: PASS')
