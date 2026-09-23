@@ -291,7 +291,7 @@ exports.provisionClinic = onCall({ region: 'us-central1' }, async (request) => {
   if (!existingSlug.empty) fail('already-exists', 'That clinic slug is already in use.')
 
   const ownerUser = await createOwnerUser(ownerEmail, temporaryPassword)
-  const passwordSetupIssuedAt = Number(ownerUser.passwordUpdatedAt) || Date.now()
+  const passwordSetupIssuedAt = Date.parse(ownerUser.passwordUpdatedAt || '') || Date.now()
   const clinicRef = clinics.doc()
   const now = FieldValue.serverTimestamp()
 
@@ -352,7 +352,7 @@ exports.completeClinicPasswordSetup = onCall({ region: 'us-central1' }, async (r
   }
 
   const userRecord = await auth.getUser(uid)
-  const passwordUpdatedAt = Number(userRecord.passwordUpdatedAt) || 0
+  const passwordUpdatedAt = Date.parse(userRecord.passwordUpdatedAt || '') || 0
   const setupIssuedAt = Number(membership.passwordSetupIssuedAt) || 0
   if (!setupIssuedAt || passwordUpdatedAt <= setupIssuedAt) {
     fail('failed-precondition', 'The permanent password has not been changed yet.')
