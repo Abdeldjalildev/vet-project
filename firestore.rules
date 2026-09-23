@@ -79,7 +79,7 @@ service cloud.firestore {
           request.resource.data.contact.email is string &&
           (request.resource.data.contact.email == '' || request.resource.data.contact.email.matches('^[^ @]+@[^ @]+[.][^ @]+$'))
         )) &&
-        (!('openingHours' in request.resource.data) || request.resource.data.openingHours is map) &&
+        (!('openingHours' in request.resource.data) || (\n          request.resource.data.openingHours is map &&\n          request.resource.data.openingHours.keys().hasOnly(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']) &&\n          (!('monday' in request.resource.data.openingHours) || request.resource.data.openingHours.monday is string) &&\n          (!('tuesday' in request.resource.data.openingHours) || request.resource.data.openingHours.tuesday is string) &&\n          (!('wednesday' in request.resource.data.openingHours) || request.resource.data.openingHours.wednesday is string) &&\n          (!('thursday' in request.resource.data.openingHours) || request.resource.data.openingHours.thursday is string) &&\n          (!('friday' in request.resource.data.openingHours) || request.resource.data.openingHours.friday is string) &&\n          (!('saturday' in request.resource.data.openingHours) || request.resource.data.openingHours.saturday is string) &&\n          (!('sunday' in request.resource.data.openingHours) || request.resource.data.openingHours.sunday is string)\n        )) &&
         validLocalizedIfPresent(request.resource.data, 'emergencyInformation') &&
         validBranding() &&
         validManagedContent() &&
