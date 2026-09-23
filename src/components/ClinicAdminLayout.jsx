@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getDoc } from 'firebase/firestore'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthProvider'
@@ -23,44 +23,37 @@ export default function ClinicAdminLayout({ section, children }) {
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
 
-  useEffect(() => {
-    let cancelled = false
+  const load = useCallback(async () => {
+    try {
+      setStatus('loading')
+      setLoadError('')
+      const membershipSnapshot = await getDoc(userRef(user.uid))
+      if (!membershipSnapshot.exists()) throw new Error('CLINIC_MEMBERSHIP_NOT_FOUND')
 
-    const load = async () => {
-      try {
-        setStatus('loading')
-        setLoadError('')
-        const membershipSnapshot = await getDoc(userRef(user.uid))
-        if (!membershipSnapshot.exists()) throw new Error('CLINIC_MEMBERSHIP_NOT_FOUND')
-
-        const nextMembership = membershipSnapshot.data()
-        if (
-          nextMembership.status !== 'active' ||
-          !['owner', 'admin'].includes(nextMembership.role) ||
-          !nextMembership.clinicId
-        ) {
-          throw new Error('CLINIC_MEMBERSHIP_INVALID')
-        }
-
-        const clinicSnapshot = await getDoc(clinicRef(nextMembership.clinicId))
-        if (!clinicSnapshot.exists()) throw new Error('CLINIC_NOT_FOUND')
-
-        if (cancelled) return
-        setMembership(nextMembership)
-        setClinic({ clinicId: clinicSnapshot.id, ...clinicSnapshot.data() })
-        setStatus('ready')
-      } catch (error) {
-        if (cancelled) return
-        setLoadError(error.message || 'ADMIN_LOAD_FAILED')
-        setStatus('error')
+      const nextMembership = membershipSnapshot.data()
+      if (
+        nextMembership.status !== 'active' ||
+        !['owner', 'admin'].includes(nextMembership.role) ||
+        !nextMembership.clinicId
+      ) {
+        throw new Error('CLINIC_MEMBERSHIP_INVALID')
       }
-    }
 
-    load()
-    return () => {
-      cancelled = true
+      const clinicSnapshot = await getDoc(clinicRef(nextMembership.clinicId))
+      if (!clinicSnapshot.exists()) throw new Error('CLINIC_NOT_FOUND')
+
+      setMembership(nextMembership)
+      setClinic({ clinicId: clinicSnapshot.id, ...clinicSnapshot.data() })
+      setStatus('ready')
+    } catch (error) {
+      setLoadError(error.message || 'ADMIN_LOAD_FAILED')
+      setStatus('error')
     }
   }, [user.uid])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   const handleSignOut = async () => {
     await signOut()
