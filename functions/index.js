@@ -1,11 +1,13 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https')
 const { logger } = require('firebase-functions')
 const { initializeApp } = require('firebase-admin/app')
+const { getAuth } = require('firebase-admin/auth')
 const { getFirestore, FieldValue } = require('firebase-admin/firestore')
 
 initializeApp()
 
 const db = getFirestore()
+const auth = getAuth()
 const clinics = db.collection('clinics')
 const users = db.collection('users')
 
@@ -216,6 +218,126 @@ exports.createPublicAppointment = onCall({ region: 'us-central1' }, async (reque
   return { appointmentId: result, status: 'pending' }
 })
 
+
+
+function requirePlatformOwner(request) {
+  if (!request.auth) fail('unauthenticated', 'Authentication is required.')
+  if (request.auth.token?.platformOwner !== true) {
+    fail('permission-denied', 'Platform Owner authorization is required.')
+  }
+}
+
+function normalizeSlug(value) {
+  const slug = requireString(value, 'slug', 63).toLowerCase()
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length < 3) {
+    fail('invalid-argument', 'slug must contain only lowercase letters, numbers, and single hyphens.')
+  }
+  return slug
+}
+
+function normalizeLocalizedMap(value, field) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    fail('invalid-argument', field + ' must contain ar, en, and fr strings.')
+  }
+  for (const language of ['ar', 'en', 'fr']) {
+    if (typeof value[language] !== 'string' || value[language].trim().length > 160) {
+      fail('invalid-argument', field + ' is invalid.')
+    }
+  }
+  return { ar: value.ar.trim(), en: value.en.trim(), fr: value.fr.trim() }
+}
+
+function validateOwnerEmail(value) {
+  const email = requireString(value, 'ownerEmail', 254).toLowerCase()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail('invalid-argument', 'ownerEmail is invalid.')
+  return email
+}
+
+async function findOrCreateOwnerUser(email) {
+  try {
+    return { user: await auth.getUserByEmail(email), created: false }
+  } catch (error) {
+    if (error?.code !== 'auth/user-not-found') throw error
+    const user = await auth.createUser({ email, emailVerified: false, disabled: false })
+    return { user, created: true }
+  }
+}
+
+exports.provisionClinic = onCall({ region: 'us-central1' }, async (request) => {
+  requirePlatformOwner(request)
+  rejectUnknownFields(request.data, new Set(['name', 'slug', 'ownerEmail', 'public']), 'clinic provisioning')
+
+  const name = normalizeLocalizedMap(request.data?.name, 'name')
+  const slug = normalizeSlug(request.data?.slug)
+  const ownerEmail = validateOwnerEmail(request.data?.ownerEmail)
+  const publish = request.data?.public === true
+
+  const existingSlug = await clinics.where('slug', '==', slug).limit(1).get()
+  if (!existingSlug.empty) fail('already-exists', 'That clinic slug is already in use.')
+
+  const { user: ownerUser, created: ownerCreated } = await findOrCreateOwnerUser(ownerEmail)
+  const existingMembership = await users.doc(ownerUser.uid).get()
+  if (existingMembership.exists) fail('already-exists', 'The selected owner already has a VetLife membership.')
+
+  const clinicRef = clinics.doc()
+  const now = FieldValue.serverTimestamp()
+
+  try {
+    await db.runTransaction(async (transaction) => {
+      const slugCheck = await transaction.get(clinics.where('slug', '==', slug).limit(1))
+      if (!slugCheck.empty) fail('already-exists', 'That clinic slug is already in use.')
+
+      transaction.create(clinicRef, {
+        slug,
+        public: publish,
+        active: true,
+        lifecycle: 'provisioned',
+        name,
+        createdAt: now,
+        updatedAt: now,
+      })
+
+      transaction.create(users.doc(ownerUser.uid), {
+        uid: ownerUser.uid,
+        clinicId: clinicRef.id,
+        role: 'owner',
+        status: 'active',
+        createdAt: now,
+        updatedAt: now,
+      })
+    })
+  } catch (error) {
+    if (ownerCreated) {
+      try { await auth.deleteUser(ownerUser.uid) } catch (cleanupError) {
+        logger.error('Provisioning cleanup failed', { uid: ownerUser.uid, error: cleanupError })
+      }
+    }
+    throw error
+  }
+
+  const setupLink = ownerCreated ? await auth.generatePasswordResetLink(ownerEmail) : null
+
+  logger.info('Clinic provisioned', { clinicId: clinicRef.id, slug, ownerUid: ownerUser.uid, ownerCreated })
+  return { clinicId: clinicRef.id, slug, ownerUid: ownerUser.uid, ownerEmail, ownerCreated, setupLink }
+})
+
+exports.listProvisionedClinics = onCall({ region: 'us-central1' }, async (request) => {
+  requirePlatformOwner(request)
+  const snapshot = await clinics.orderBy('createdAt', 'desc').limit(100).get()
+  return {
+    clinics: snapshot.docs.map((document) => {
+      const data = document.data()
+      return {
+        clinicId: document.id,
+        slug: data.slug || '',
+        name: data.name || { ar: '', en: '', fr: '' },
+        public: data.public === true,
+        active: data.active === true,
+        lifecycle: data.lifecycle || 'unknown',
+      }
+    }),
+  }
+})
 
 
 const ANALYTICS_EVENT_TYPES = new Set([
