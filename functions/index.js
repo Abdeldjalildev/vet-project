@@ -2,6 +2,7 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https')
 const { logger } = require('firebase-functions')
 const { initializeApp } = require('firebase-admin/app')
 const { getAuth } = require('firebase-admin/auth')
+const crypto = require('crypto')
 const { getFirestore, FieldValue } = require('firebase-admin/firestore')
 
 initializeApp()
@@ -258,7 +259,8 @@ async function findOrCreateOwnerUser(email) {
     return { user: await auth.getUserByEmail(email), created: false }
   } catch (error) {
     if (error?.code !== 'auth/user-not-found') throw error
-    const user = await auth.createUser({ email, emailVerified: false, disabled: false })
+    const temporaryPassword = crypto.randomBytes(24).toString('base64url')
+    const user = await auth.createUser({ email, emailVerified: false, disabled: false, password: temporaryPassword })
     return { user, created: true }
   }
 }
@@ -276,6 +278,7 @@ exports.provisionClinic = onCall({ region: 'us-central1' }, async (request) => {
   if (!existingSlug.empty) fail('already-exists', 'That clinic slug is already in use.')
 
   const { user: ownerUser, created: ownerCreated } = await findOrCreateOwnerUser(ownerEmail)
+  if (ownerUser.disabled) fail('failed-precondition', 'The selected owner account is disabled.')
   const existingMembership = await users.doc(ownerUser.uid).get()
   if (existingMembership.exists) fail('already-exists', 'The selected owner already has a VetLife membership.')
 
