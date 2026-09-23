@@ -60,7 +60,6 @@ export default function PublicClinicPage({ clinicSlug }) {
     }
 
     load()
-
     return () => {
       cancelled = true
       unsubscribe?.()
@@ -93,7 +92,7 @@ export default function PublicClinicPage({ clinicSlug }) {
         <About clinic={clinic} />
         <VetTips />
         <Faq faqs={faqs} />
-        <BookingForm clinicId={clinic.clinicId} services={services} />
+        <BookingForm clinicId={clinic.clinicId} services={services} clinic={clinic} />
       </main>
       <Footer clinic={clinic} />
     </div>
