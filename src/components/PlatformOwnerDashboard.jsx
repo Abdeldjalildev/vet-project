@@ -5,7 +5,7 @@ import { getPlatformOwnerClaim } from '../lib/auth'
 import { listProvisionedClinics, provisionClinic } from '../lib/platform'
 
 const EMPTY = { ar: '', en: '', fr: '' }
-const INITIAL_FORM = { name: EMPTY, slug: '', ownerEmail: '', temporaryPassword: '', public: false }
+const INITIAL_FORM = { name: EMPTY, slug: '', ownerEmail: '', public: false }
 
 export default function PlatformOwnerDashboard() {
   const { user, signOut } = useAuth()
@@ -45,9 +45,12 @@ export default function PlatformOwnerDashboard() {
     setMessage('')
     setError('')
     try {
-      await provisionClinic(form)
+      const formData = new FormData(event.currentTarget)
+      const temporaryPassword = String(formData.get('temporaryPassword') || '')
+      await provisionClinic({ ...form, temporaryPassword })
       setMessage(t('clinicProvisioned'))
-      setForm({ name: { ...EMPTY }, slug: '', ownerEmail: '', temporaryPassword: '', public: false })
+      setForm({ name: { ...EMPTY }, slug: '', ownerEmail: '', public: false })
+      event.currentTarget.reset()
       setClinics(await listProvisionedClinics())
     } catch (saveError) {
       setError(saveError?.message || 'CLINIC_PROVISION_FAILED')
@@ -98,7 +101,7 @@ export default function PlatformOwnerDashboard() {
             </label>
             <label className="block text-sm font-bold">
               {t('temporaryPassword')}
-              <input required type="password" autoComplete="new-password" minLength={12} maxLength={128} value={form.temporaryPassword} onChange={(e) => setForm((v) => ({ ...v, temporaryPassword: e.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal dark:border-gray-700 dark:bg-gray-950" />
+              <input required type="password" autoComplete="new-password" minLength={12} maxLength={128} name="temporaryPassword" className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal dark:border-gray-700 dark:bg-gray-950" />
               <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-gray-400">{t('temporaryPasswordHint')}</span>
             </label>
             <label className="flex items-center gap-3 text-sm font-bold">
