@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthProvider'
-import { getPlatformOwnerClaim } from '../lib/auth'
+import { getClinicMembership, getPlatformOwnerClaim } from '../lib/auth'
 
 const getAuthErrorMessage = (error) => {
   switch (error?.code) {
@@ -27,7 +27,14 @@ export default function VetLifeEntry() {
   useEffect(() => {
     if (!user) return
     getPlatformOwnerClaim(user)
-      .then((isPlatformOwner) => window.location.replace(isPlatformOwner ? '/platform/dashboard' : '/clinic/dashboard'))
+      .then(async (isPlatformOwner) => {
+        if (isPlatformOwner) {
+          window.location.replace('/platform/dashboard')
+          return
+        }
+        const membership = await getClinicMembership(user.uid)
+        window.location.replace(membership?.mustChangePassword === true ? '/clinic/first-password' : '/clinic/dashboard')
+      })
       .catch(() => window.location.replace('/clinic/dashboard'))
   }, [user])
 
