@@ -34,7 +34,7 @@ export default function Hero({ clinic }) {
         )}
 
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <a href="#booking" className="rounded-2xl px-8 py-4 text-center font-bold text-white shadow-lg shadow-sky-600/20 transition-all hover:-translate-y-0.5 dark:shadow-none" style={{ backgroundColor: 'var(--clinic-primary)' }}">
+          <a href="#booking" className="rounded-2xl px-8 py-4 text-center font-bold text-white shadow-lg shadow-sky-600/20 transition-all hover:-translate-y-0.5 dark:shadow-none" style={{ backgroundColor: 'var(--clinic-primary)' }}>
             {t('heroBtnBook')}
           </a>
           <a href="#services" className="inline-block rounded-2xl border border-slate-200 bg-white px-8 py-4 font-bold text-slate-700 transition-all hover:bg-slate-100 dark:border-gray-700 dark:bg-gray-800 dark:text-slate-200 dark:hover:bg-gray-750">
