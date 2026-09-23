@@ -11,12 +11,12 @@ export default function ClinicPublicAccessAdmin({ clinic }) {
     return new URL('/c/' + encodeURIComponent(clinic.slug), window.location.origin).toString()
   }, [clinic?.slug])
 
-  const qrSvg = useMemo(() => {
+  const qrDataUrl = useMemo(() => {
     if (!publicUrl) return ''
     const qr = qrcode(0, 'M')
     qr.addData(publicUrl)
     qr.make()
-    return qr.createSvgTag({ cellSize: 6, margin: 4, scalable: true })
+    return qr.createDataURL(6, 4)
   }, [publicUrl])
 
   const copyLink = async () => {
@@ -44,7 +44,7 @@ export default function ClinicPublicAccessAdmin({ clinic }) {
         <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">VetLife</p>
         <h3 className="mt-2 text-2xl font-black">{clinic?.name?.en || clinic?.name?.ar || clinic?.name?.fr || 'Clinic'}</h3>
         <p className="mt-2 text-sm text-slate-500 dark:text-gray-400 print:text-black">{t('scanToVisitClinic')}</p>
-        <div className="mx-auto mt-6 max-w-[360px] rounded-2xl bg-white p-4" dangerouslySetInnerHTML={{ __html: qrSvg }} aria-label={t('clinicQrCode')} />
+        <div className="mx-auto mt-6 max-w-[360px] rounded-2xl bg-white p-4"><img src={qrDataUrl} alt={t('clinicQrCode')} className="mx-auto h-auto w-full" /></div>
         <p className="mt-4 break-all text-xs text-slate-500 dark:text-gray-400 print:text-black">{publicUrl}</p>
       </section>
     </div>
