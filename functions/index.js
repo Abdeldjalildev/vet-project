@@ -291,6 +291,7 @@ exports.provisionClinic = onCall({ region: 'us-central1' }, async (request) => {
   if (!existingSlug.empty) fail('already-exists', 'That clinic slug is already in use.')
 
   const ownerUser = await createOwnerUser(ownerEmail, temporaryPassword)
+  const passwordSetupIssuedAt = Number(ownerUser.passwordUpdatedAt) || Date.now()
   const clinicRef = clinics.doc()
   const now = FieldValue.serverTimestamp()
 
@@ -321,8 +322,9 @@ exports.provisionClinic = onCall({ region: 'us-central1' }, async (request) => {
       })
     })
   } catch (error) {
-    if (ownerCreated) {
-      try { await auth.deleteUser(ownerUser.uid) } catch (cleanupError) {
+    try {
+      await auth.deleteUser(ownerUser.uid)
+    } catch (cleanupError) {
         logger.error('Provisioning cleanup failed', { uid: ownerUser.uid, error: cleanupError })
       }
     }
