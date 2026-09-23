@@ -181,11 +181,11 @@ The Phase 12 canonical public-link/QR implementation remains the clinic-facing d
 Implementation verification performed at repository level included direct inspection of the baseline reference and current public components, route/data-flow reconciliation, contract-smoke assertion updates, and post-edit source audit. A final JSX defect found during the post-edit audit was corrected before completion. CI was triggered by the resulting GitHub commits; CI/runtime/browser/deployment evidence is not claimed until the corresponding run and later Phase 14 verification provide concrete evidence.
 
 ### Phase 14 — Full Verification, Integration & Commercial Release
-- G14.1 Combined Firebase Runtime Verification — **PLANNED / NOT IMPLEMENTED**
-- G14.2 Security & Isolation Verification — **PLANNED / NOT IMPLEMENTED**
-- G14.3 Browser, Responsive & Accessibility Verification — **PLANNED / NOT IMPLEMENTED**
-- G14.4 CI, Deployment & Full Regression — **PLANNED / NOT IMPLEMENTED**
-- G14.5 Progressive Phase Closure & Commercial Release — **PLANNED / NOT IMPLEMENTED**
+- G14.1 Combined Firebase Runtime Verification — **IMPLEMENTED / PENDING RUNTIME EVIDENCE**
+- G14.2 Security & Isolation Verification — **IMPLEMENTED / PENDING RUNTIME SECURITY EVIDENCE**
+- G14.3 Browser, Responsive & Accessibility Verification — **IMPLEMENTED / PENDING BROWSER EVIDENCE**
+- G14.4 CI, Deployment & Full Regression — **IMPLEMENTED / PENDING DEPLOYMENT + RUNTIME EVIDENCE**
+- G14.5 Progressive Phase Closure & Commercial Release — **IMPLEMENTED / PENDING RELEASE BLOCKER RESOLUTION + EVIDENCE**
 
 Phase 14 is verification/release only. It must not be used to introduce unrelated product scope.
 
