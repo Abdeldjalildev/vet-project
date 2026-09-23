@@ -1,6 +1,7 @@
 import {
   browserLocalPersistence,
   getAuth,
+  getIdTokenResult,
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
@@ -15,3 +16,9 @@ export const signInClinicUser = async (email, password) => {
 }
 
 export const signOutClinicUser = () => signOut(firebaseAuth)
+
+export const getPlatformOwnerClaim = async (user, forceRefresh = false) => {
+  if (!user) return false
+  const tokenResult = await getIdTokenResult(user, forceRefresh)
+  return tokenResult.claims.platformOwner === true
+}
