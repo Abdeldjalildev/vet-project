@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:contract": "node tests/contract-smoke.mjs"
+    "test:contract": "node tests/contract-smoke.mjs",
+    "test:release-readiness": "node tests/release-readiness.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.41.0",
