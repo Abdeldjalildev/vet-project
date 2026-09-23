@@ -5,6 +5,7 @@ import { getPlatformOwnerClaim } from '../lib/auth'
 import { listProvisionedClinics, provisionClinic } from '../lib/platform'
 
 const EMPTY = { ar: '', en: '', fr: '' }
+const INITIAL_FORM = { name: EMPTY, slug: '', ownerEmail: '', temporaryPassword: '', public: false }
 
 export default function PlatformOwnerDashboard() {
   const { user, signOut } = useAuth()
@@ -15,7 +16,7 @@ export default function PlatformOwnerDashboard() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ name: EMPTY, slug: '', ownerEmail: '', public: false })
+  const [form, setForm] = useState(INITIAL_FORM)
 
   const load = async () => {
     setStatus('loading')
@@ -45,10 +46,8 @@ export default function PlatformOwnerDashboard() {
     setError('')
     try {
       const result = await provisionClinic(form)
-      setMessage(result.ownerCreated && result.setupLink
-        ? t('clinicProvisioned') + ' ' + result.setupLink
-        : t('clinicProvisioned'))
-      setForm({ name: { ...EMPTY }, slug: '', ownerEmail: '', public: false })
+      setMessage(t('clinicProvisioned'))
+      setForm({ name: { ...EMPTY }, slug: '', ownerEmail: '', temporaryPassword: '', public: false })
       setClinics(await listProvisionedClinics())
     } catch (saveError) {
       setError(saveError?.message || 'CLINIC_PROVISION_FAILED')
@@ -95,7 +94,12 @@ export default function PlatformOwnerDashboard() {
             </label>
             <label className="block text-sm font-bold">
               {t('clinicOwnerEmail')}
-              <input required type="email" value={form.ownerEmail} onChange={(e) => setForm((v) => ({ ...v, ownerEmail: e.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal dark:border-gray-700 dark:bg-gray-950" />
+              <input required type="email" autoComplete="off" value={form.ownerEmail} onChange={(e) => setForm((v) => ({ ...v, ownerEmail: e.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal dark:border-gray-700 dark:bg-gray-950" />
+            </label>
+            <label className="block text-sm font-bold">
+              {t('temporaryPassword')}
+              <input required type="password" autoComplete="new-password" minLength={12} maxLength={128} value={form.temporaryPassword} onChange={(e) => setForm((v) => ({ ...v, temporaryPassword: e.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal dark:border-gray-700 dark:bg-gray-950" />
+              <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-gray-400">{t('temporaryPasswordHint')}</span>
             </label>
             <label className="flex items-center gap-3 text-sm font-bold">
               <input type="checkbox" checked={form.public} onChange={(e) => setForm((v) => ({ ...v, public: e.target.checked }))} />
