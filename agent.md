@@ -196,6 +196,9 @@ Concrete defects/drift found and repaired:
 
 The amendment preserves the existing Firebase Auth + Firestore membership model and does not replace backend authorization with frontend routing. Runtime/security/browser verification remains pending and is not implied by these repository repairs.
 
+### Final post-password-flow deep-audit repair record — 2026-09-23
+A second repository audit of the new first-login password flow found one concrete timestamp-type defect in the trusted password completion contract. Firebase Admin `UserRecord.passwordUpdatedAt` is an ISO timestamp string, so numeric coercion would have produced `NaN` and caused the completion check to reject a legitimate permanent-password change. The provisioning baseline and completion comparison now use `Date.parse(...)`, and contract-smoke coverage asserts both parsing paths. No additional code-level defect was identified in the inspected authentication, routing, provisioning, Firestore Rules, public booking/analytics, QR/public-access, CI, and release-readiness boundaries. Runtime/browser/deployment evidence remains pending and is not implied by this audit.
+
 ### Phase 14 — Full Verification, Integration & Commercial Release
 - G14.1 Combined Firebase Runtime Verification — **IMPLEMENTED / PENDING RUNTIME EVIDENCE**
 - G14.2 Security & Isolation Verification — **IMPLEMENTED / PENDING RUNTIME SECURITY EVIDENCE**
