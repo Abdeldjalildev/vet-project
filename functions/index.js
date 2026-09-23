@@ -254,33 +254,45 @@ function validateOwnerEmail(value) {
   return email
 }
 
-async function findOrCreateOwnerUser(email) {
+function validateTemporaryPassword(value) {
+  if (typeof value !== 'string' || value.length < 12 || value.length > 128) {
+    fail('invalid-argument', 'temporaryPassword must be between 12 and 128 characters.')
+  }
+  return value
+}
+
+async function createOwnerUser(email, temporaryPassword) {
   try {
-    return { user: await auth.getUserByEmail(email), created: false }
+    await auth.getUserByEmail(email)
+    fail('already-exists', 'The selected owner email is already registered.')
   } catch (error) {
     if (error?.code !== 'auth/user-not-found') throw error
-    const temporaryPassword = crypto.randomBytes(24).toString('base64url')
-    const user = await auth.createUser({ email, emailVerified: false, disabled: false, password: temporaryPassword })
-    return { user, created: true }
   }
+
+  const user = await auth.createUser({
+    email,
+    emailVerified: false,
+    disabled: false,
+    password: temporaryPassword,
+  })
+  return user
 }
 
 exports.provisionClinic = onCall({ region: 'us-central1' }, async (request) => {
   requirePlatformOwner(request)
-  rejectUnknownFields(request.data, new Set(['name', 'slug', 'ownerEmail', 'public']), 'clinic provisioning')
+  rejectUnknownFields(request.data, new Set(['name', 'slug', 'ownerEmail', 'temporaryPassword', 'public']), 'clinic provisioning')
 
   const name = normalizeLocalizedMap(request.data?.name, 'name')
   const slug = normalizeSlug(request.data?.slug)
   const ownerEmail = validateOwnerEmail(request.data?.ownerEmail)
+  const temporaryPassword = validateTemporaryPassword(request.data?.temporaryPassword)
   const publish = request.data?.public === true
 
   const existingSlug = await clinics.where('slug', '==', slug).limit(1).get()
   if (!existingSlug.empty) fail('already-exists', 'That clinic slug is already in use.')
 
-  const { user: ownerUser, created: ownerCreated } = await findOrCreateOwnerUser(ownerEmail)
-  if (ownerUser.disabled) fail('failed-precondition', 'The selected owner account is disabled.')
-  const existingMembership = await users.doc(ownerUser.uid).get()
-  if (existingMembership.exists) fail('already-exists', 'The selected owner already has a VetLife membership.')
+  const ownerUser = await createOwnerUser(ownerEmail, temporaryPassword)
+  const ownerCreated = true
 
   const clinicRef = clinics.doc()
   const now = FieldValue.serverTimestamp()
@@ -305,6 +317,7 @@ exports.provisionClinic = onCall({ region: 'us-central1' }, async (request) => {
         clinicId: clinicRef.id,
         role: 'owner',
         status: 'active',
+        mustChangePassword: true,
         createdAt: now,
         updatedAt: now,
       })
@@ -318,10 +331,32 @@ exports.provisionClinic = onCall({ region: 'us-central1' }, async (request) => {
     throw error
   }
 
-  const setupLink = ownerCreated ? await auth.generatePasswordResetLink(ownerEmail) : null
+  logger.info('Clinic provisioned', { clinicId: clinicRef.id, slug, ownerUid: ownerUser.uid })
+  return { clinicId: clinicRef.id, slug, ownerUid: ownerUser.uid, ownerEmail }
+})
 
-  logger.info('Clinic provisioned', { clinicId: clinicRef.id, slug, ownerUid: ownerUser.uid, ownerCreated })
-  return { clinicId: clinicRef.id, slug, ownerUid: ownerUser.uid, ownerEmail, ownerCreated, setupLink }
+exports.completeClinicPasswordSetup = onCall({ region: 'us-central1' }, async (request) => {
+  if (!request.auth) fail('unauthenticated', 'Authentication is required.')
+
+  const uid = request.auth.uid
+  const membershipRef = users.doc(uid)
+  const membershipSnapshot = await membershipRef.get()
+  if (!membershipSnapshot.exists) fail('permission-denied', 'Clinic membership was not found.')
+
+  const membership = membershipSnapshot.data()
+  if (membership.status !== 'active' || !['owner', 'admin'].includes(membership.role)) {
+    fail('permission-denied', 'Active clinic membership is required.')
+  }
+  if (membership.mustChangePassword !== true) {
+    return { completed: true }
+  }
+
+  await membershipRef.update({
+    mustChangePassword: false,
+    updatedAt: FieldValue.serverTimestamp(),
+  })
+
+  return { completed: true }
 })
 
 exports.listProvisionedClinics = onCall({ region: 'us-central1' }, async (request) => {
