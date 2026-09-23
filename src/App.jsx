@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from './auth/AuthProvider'
 import ClinicLogin from './components/ClinicLogin'
 import ClinicAdminLayout from './components/ClinicAdminLayout'
@@ -8,7 +8,11 @@ import ClinicServicesAdmin from './components/ClinicServicesAdmin'
 import ClinicSettingsAdmin from './components/ClinicSettingsAdmin'
 import ClinicContentAdmin from './components/ClinicContentAdmin'
 import ClinicAnalyticsAdmin from './components/ClinicAnalyticsAdmin'
+import ClinicPublicAccessAdmin from './components/ClinicPublicAccessAdmin'
+import PlatformOwnerDashboard from './components/PlatformOwnerDashboard'
 import PublicClinicPage from './components/PublicClinicPage'
+import VetLifeEntry from './components/VetLifeEntry'
+import { getPlatformOwnerClaim } from './lib/auth'
 import { useTranslation } from 'react-i18next'
 
 function ClinicRoute() {
@@ -16,25 +20,19 @@ function ClinicRoute() {
   const { t } = useTranslation()
   const path = window.location.pathname
 
-  if (authLoading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-gray-950">
-        <p className="text-sm font-semibold text-slate-600 dark:text-gray-300">{t('checkingClinicSession')}</p>
-      </main>
-    )
-  }
+  if (authLoading) return <RouteState message={t('checkingClinicSession')} />
 
   if (path === '/clinic/login') {
-    return user ? <Redirect path="/clinic/dashboard" /> : <ClinicLogin />
+    return user ? <Redirect path="/" /> : <ClinicLogin />
   }
 
-  if (!user) return <Redirect path="/clinic/login" />
+  if (!user) return <Redirect path="/" />
 
   const section = path === '/clinic/dashboard'
     ? 'dashboard'
     : path.replace('/clinic/', '').split('/')[0]
 
-  const validSections = ['dashboard', 'appointments', 'services', 'content', 'analytics', 'settings']
+  const validSections = ['dashboard', 'appointments', 'services', 'content', 'analytics', 'settings', 'public']
   const activeSection = validSections.includes(section) ? section : 'dashboard'
 
   return (
@@ -46,62 +44,61 @@ function ClinicRoute() {
 
 function ClinicSection({ section, clinicId, clinic }) {
   const { t } = useTranslation()
-
   if (section === 'dashboard') return <ClinicOverview clinicId={clinicId} />
   if (section === 'appointments') return <ClinicAppointmentsAdmin clinicId={clinicId} />
   if (section === 'services') return <ClinicServicesAdmin clinicId={clinicId} />
   if (section === 'content') return <ClinicContentAdmin clinicId={clinicId} clinic={clinic} />
   if (section === 'settings') return <ClinicSettingsAdmin clinicId={clinicId} clinic={clinic} />
   if (section === 'analytics') return <ClinicAnalyticsAdmin clinicId={clinicId} />
+  if (section === 'public') return <ClinicPublicAccessAdmin clinic={clinic} />
+  return <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-gray-700 dark:bg-gray-900"><h3 className="text-xl font-black">{t('adminNavPublic')}</h3></section>
+}
 
-  return (
-    <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-gray-700 dark:bg-gray-900">
-      <h3 className="text-xl font-black">{t(`adminNav${section[0].toUpperCase()}${section.slice(1)}`)}</h3>
-      <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">{t('phaseComingLater')}</p>
-    </section>
-  )
+function PlatformRoute() {
+  const { user, authLoading } = useAuth()
+  const { t } = useTranslation()
+  const [state, setState] = useState('loading')
+  const [authorized, setAuthorized] = useState(false)
+
+  useEffect(() => {
+    if (!user) {
+      setState('ready')
+      setAuthorized(false)
+      return
+    }
+    getPlatformOwnerClaim(user, true)
+      .then((claim) => { setAuthorized(claim); setState('ready') })
+      .catch(() => { setAuthorized(false); setState('ready') })
+  }, [user])
+
+  if (authLoading || state === 'loading') return <RouteState message={t('checkingPlatformSession')} />
+  if (!user) return <Redirect path="/" />
+  if (!authorized) return <RouteState message={t('platformAccessDenied')} />
+  return <PlatformOwnerDashboard />
+}
+
+function RouteState({ message }) {
+  return <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-gray-950"><p className="text-sm font-semibold text-slate-600 dark:text-gray-300">{message}</p></main>
 }
 
 function Redirect({ path }) {
-  useEffect(() => {
-    window.location.replace(path)
-  }, [path])
-
+  useEffect(() => { window.location.replace(path) }, [path])
   return null
 }
 
 function getPublicClinicSlug() {
   const segments = window.location.pathname.split('/').filter(Boolean)
-
-  if (segments[0] === 'c' && segments[1]) {
-    return decodeURIComponent(segments[1])
-  }
-
-  return import.meta.env.VITE_DEFAULT_CLINIC_SLUG || ''
-}
-
-function PublicRoute() {
-  const clinicSlug = getPublicClinicSlug()
-
-  if (!clinicSlug) {
-    const { t } = useTranslation()
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 dark:bg-gray-950">
-        <section className="max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl dark:border-gray-800 dark:bg-gray-900">
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white">VetLife</h1>
-          <p className="mt-3 text-sm text-slate-600 dark:text-gray-300">
-            {t('publicSlugRequired')}
-          </p>
-        </section>
-      </main>
-    )
-  }
-
-  return <PublicClinicPage clinicSlug={clinicSlug} />
+  return segments[0] === 'c' && segments[1] ? decodeURIComponent(segments[1]) : ''
 }
 
 export default function App() {
-  return window.location.pathname.startsWith('/clinic/')
-    ? <ClinicRoute />
-    : <PublicRoute />
+  const path = window.location.pathname
+  if (path === '/') return <VetLifeEntry />
+  if (path.startsWith('/clinic/')) return <ClinicRoute />
+  if (path.startsWith('/platform/')) return <PlatformRoute />
+  if (path.startsWith('/c/')) {
+    const clinicSlug = getPublicClinicSlug()
+    return clinicSlug ? <PublicClinicPage clinicSlug={clinicSlug} /> : <RouteState message="Invalid public clinic route." />
+  }
+  return <VetLifeEntry />
 }
