@@ -25,6 +25,8 @@ jobs:
         run: npm ci
       - name: Contract smoke tests
         run: npm run test:contract
+      - name: Release readiness checks
+        run: npm run test:release-readiness
       - name: Validate Cloud Functions syntax
         run: node --check functions/index.js
       - name: Build web application
