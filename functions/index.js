@@ -2,7 +2,6 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https')
 const { logger } = require('firebase-functions')
 const { initializeApp } = require('firebase-admin/app')
 const { getAuth } = require('firebase-admin/auth')
-const crypto = require('crypto')
 const { getFirestore, FieldValue } = require('firebase-admin/firestore')
 
 initializeApp()
@@ -292,8 +291,6 @@ exports.provisionClinic = onCall({ region: 'us-central1' }, async (request) => {
   if (!existingSlug.empty) fail('already-exists', 'That clinic slug is already in use.')
 
   const ownerUser = await createOwnerUser(ownerEmail, temporaryPassword)
-  const ownerCreated = true
-
   const clinicRef = clinics.doc()
   const now = FieldValue.serverTimestamp()
 
