@@ -125,6 +125,8 @@ assert.match(publicClinic, /<VetTips \/>/)
 assert.match(publicClinic, /<BookingForm[^>]+clinic=/)
 assert.match(publicClinic, /<Footer clinic=/)
 
+assert.match(functions, /Date\.parse\(ownerUser\.passwordUpdatedAt \|\| ''\)/)
+assert.match(functions, /Date\.parse\(userRecord\.passwordUpdatedAt \|\| ''\)/)
 assert.match(functions, /temporaryPassword/)
 assert.match(functions, /mustChangePassword: true/)
 assert.match(functions, /completeClinicPasswordSetup/)
