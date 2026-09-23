@@ -10,9 +10,10 @@ import ClinicContentAdmin from './components/ClinicContentAdmin'
 import ClinicAnalyticsAdmin from './components/ClinicAnalyticsAdmin'
 import ClinicPublicAccessAdmin from './components/ClinicPublicAccessAdmin'
 import PlatformOwnerDashboard from './components/PlatformOwnerDashboard'
+import ClinicFirstPassword from './components/ClinicFirstPassword'
 import PublicClinicPage from './components/PublicClinicPage'
 import VetLifeEntry from './components/VetLifeEntry'
-import { getPlatformOwnerClaim } from './lib/auth'
+import { getClinicMembership, getPlatformOwnerClaim } from './lib/auth'
 import { useTranslation } from 'react-i18next'
 
 function ClinicRoute() {
@@ -27,6 +28,8 @@ function ClinicRoute() {
   }
 
   if (!user) return <Redirect path="/" />
+
+  if (path === '/clinic/first-password') return <ClinicFirstPassword />
 
   const section = path === '/clinic/dashboard'
     ? 'dashboard'
