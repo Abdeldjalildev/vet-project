@@ -45,7 +45,7 @@ export default function PlatformOwnerDashboard() {
     setMessage('')
     setError('')
     try {
-      const result = await provisionClinic(form)
+      await provisionClinic(form)
       setMessage(t('clinicProvisioned'))
       setForm({ name: { ...EMPTY }, slug: '', ownerEmail: '', temporaryPassword: '', public: false })
       setClinics(await listProvisionedClinics())
