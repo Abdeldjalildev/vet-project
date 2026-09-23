@@ -19,7 +19,8 @@
     "react-dom": "^19.2.6",
     "react-hot-toast": "^2.6.0",
     "react-i18next": "^17.0.8",
-    "firebase": "^12.19.0"
+    "firebase": "^12.19.0",
+    "qrcode-generator": "^2.0.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
