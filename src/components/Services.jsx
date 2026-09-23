@@ -74,7 +74,7 @@ export default function Services({ services = [], clinicId }) {
                   data-analytics-clinic-id={clinicId}
                   className={`group rounded-2xl border border-slate-100 bg-slate-50 p-6 shadow-sm transition-all duration-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:shadow-none ${style.wrapper} hover:-translate-y-1 hover:shadow-xl`}
                 >
-                  <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl text-xl font-bold text-white transition-colors ${style.iconClass}`}>{icon}</div>
+                  <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl text-xl font-bold transition-colors ${style.iconClass}`}>{icon}</div>
                   <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white">{localized(service.name, i18n.language) || t('serviceFallbackName')}</h3>
                   <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{localized(service.description, i18n.language) || t('serviceFallbackDescription')}</p>
                   <p className={`mt-4 text-sm font-black ${style.accent}`}>
