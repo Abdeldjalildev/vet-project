@@ -94,7 +94,7 @@ console.log('VetLife contract smoke tests: PASS')
 
 assert.match(functions, /request\.auth\.token\?\.platformOwner !== true/)
 assert.match(functions, /transaction\.create\(users\.doc\(ownerUser\.uid\)/)
-assert.match(functions, /generatePasswordResetLink/)
+assert.ok(!functions.includes('generatePasswordResetLink'))
 assert.match(functionsScript, /setCustomUserClaims/)
 assert.match(functionsScript, /platformOwner: true/)
 assert.match(functionsScript, /emailVerified/)
