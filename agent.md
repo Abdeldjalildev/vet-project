@@ -166,12 +166,19 @@ A repository-level implementation pass completed G12.1–G12.4 against the Phase
 Runtime closure is intentionally not claimed. In particular, the bootstrap custom claim must be applied from a privileged environment, callable Functions must be deployed to the intended Firebase project, and browser/Firebase Rules/isolation behavior must be exercised later with concrete evidence.
 
 ### Phase 13 — VetLife Experience & Commercial UI Restoration
-- G13.1 Original VetLife Visual Identity Restoration — **PLANNED / NOT IMPLEMENTED**
-- G13.2 Dynamic Content Inside the VetLife Identity — **PLANNED / NOT IMPLEMENTED**
-- G13.3 Public Link, QR & Clinic Discovery UX — **PLANNED / NOT IMPLEMENTED**
-- G13.4 Commercial UX Consistency — **PLANNED / NOT IMPLEMENTED**
+- G13.1 Original VetLife Visual Identity Restoration — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G13.2 Dynamic Content Inside the VetLife Identity — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G13.3 Public Link, QR & Clinic Discovery UX — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G13.4 Commercial UX Consistency — **IMPLEMENTED / PENDING CI + RUNTIME CLOSURE**
 
 Phase 13 restores the original VetLife public product identity and integrates the existing managed-data model without weakening its contracts.
+
+Phase 13 implementation record — 2026-09-23
+A repository-level implementation pass completed G13.1–G13.4 against the Phase 13 contract and the known baseline commit `4cc11d572a0e159c6f7c7a00682d8464e7d84377`. The public clinic surface now restores the baseline VetLife visual language (VetLife branding, sky/emerald hero gradient, distinct service-card palette, About, Vet Tips, animated FAQ, dark mode, responsive spacing, booking CTA/form, and branded footer) while retaining the Phase 1–10 Firestore-driven data path and Phase 12 routing/provisioning model. Dynamic clinic name, hero/about/footer, services, FAQs, contact details, social links, approved logo, and constrained branding are rendered through bounded text/URL fields only; no arbitrary HTML/CSS/page-builder surface was introduced. Empty managed content receives explicit safe UI fallbacks.
+
+The Phase 12 canonical public-link/QR implementation remains the clinic-facing discovery mechanism. Phase 13 preserves the QR boundary: only the canonical `/c/{slug}` URL is encoded, with no credentials, tokens, clinic-private paths, or admin routes. Contract-smoke coverage was extended for the restored visual identity, dynamic public surface, booking integration, and Phase 13 fallback resources.
+
+Implementation verification performed at repository level included direct inspection of the baseline reference and current public components, route/data-flow reconciliation, contract-smoke assertion updates, and post-edit source audit. A final JSX defect found during the post-edit audit was corrected before completion. CI was triggered by the resulting GitHub commits; CI/runtime/browser/deployment evidence is not claimed until the corresponding run and later Phase 14 verification provide concrete evidence.
 
 ### Phase 14 — Full Verification, Integration & Commercial Release
 - G14.1 Combined Firebase Runtime Verification — **PLANNED / NOT IMPLEMENTED**
