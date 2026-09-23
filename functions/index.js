@@ -315,6 +315,7 @@ exports.provisionClinic = onCall({ region: 'us-central1' }, async (request) => {
         role: 'owner',
         status: 'active',
         mustChangePassword: true,
+        passwordSetupIssuedAt,
         createdAt: now,
         updatedAt: now,
       })
@@ -346,6 +347,13 @@ exports.completeClinicPasswordSetup = onCall({ region: 'us-central1' }, async (r
   }
   if (membership.mustChangePassword !== true) {
     return { completed: true }
+  }
+
+  const userRecord = await auth.getUser(uid)
+  const passwordUpdatedAt = Number(userRecord.passwordUpdatedAt) || 0
+  const setupIssuedAt = Number(membership.passwordSetupIssuedAt) || 0
+  if (!setupIssuedAt || passwordUpdatedAt <= setupIssuedAt) {
+    fail('failed-precondition', 'The permanent password has not been changed yet.')
   }
 
   await membershipRef.update({
