@@ -6,8 +6,6 @@ import { changePasswordAndCompleteSetup, getClinicMembership } from '../lib/auth
 export default function ClinicFirstPassword() {
   const { user, signOut } = useAuth()
   const { t } = useTranslation()
-  const [password, setPassword] = useState('')
-  const [confirmation, setConfirmation] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [checking, setChecking] = useState(true)
@@ -38,6 +36,10 @@ export default function ClinicFirstPassword() {
   const submit = async (event) => {
     event.preventDefault()
     setError('')
+
+    const formData = new FormData(event.currentTarget)
+    const password = String(formData.get('password') || '')
+    const confirmation = String(formData.get('confirmation') || '')
 
     if (password.length < 12 || password.length > 128) {
       setError(t('passwordTooShort'))
@@ -73,11 +75,11 @@ export default function ClinicFirstPassword() {
         <form onSubmit={submit} className="mt-8 space-y-5">
           <label className="block text-sm font-bold text-slate-800 dark:text-gray-200">
             {t('newPassword')}
-            <input required type="password" autoComplete="new-password" minLength={12} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-950" />
+            <input required type="password" autoComplete="new-password" minLength={12} maxLength={128} name="password" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-950" />
           </label>
           <label className="block text-sm font-bold text-slate-800 dark:text-gray-200">
             {t('confirmNewPassword')}
-            <input required type="password" autoComplete="new-password" minLength={12} maxLength={128} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-950" />
+            <input required type="password" autoComplete="new-password" minLength={12} maxLength={128} name="confirmation" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-950" />
           </label>
           {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{error}</p>}
           <button type="submit" disabled={saving} className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-bold text-white disabled:opacity-50">
