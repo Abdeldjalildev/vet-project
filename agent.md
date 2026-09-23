@@ -4,7 +4,7 @@
 > **Repository:** `Abdeldjalildev/vet-project`  
 > **Primary objective:** Transform VetLife from a frontend/demo veterinary website into a secure, configurable, production-ready veterinary clinic platform with a public customer interface and a clinic/admin interface backed by Firebase.
 
-## Current Implementation Status — 2026-09-20
+## Current Implementation Status — 2026-09-23
 
 ### Phase 0
 **CLOSED — G0.1 through G0.5**
@@ -179,6 +179,22 @@ A repository-level implementation pass completed G13.1–G13.4 against the Phase
 The Phase 12 canonical public-link/QR implementation remains the clinic-facing discovery mechanism. Phase 13 preserves the QR boundary: only the canonical `/c/{slug}` URL is encoded, with no credentials, tokens, clinic-private paths, or admin routes. Contract-smoke coverage was extended for the restored visual identity, dynamic public surface, booking integration, and Phase 13 fallback resources.
 
 Implementation verification performed at repository level included direct inspection of the baseline reference and current public components, route/data-flow reconciliation, contract-smoke assertion updates, and post-edit source audit. A final JSX defect found during the post-edit audit was corrected before completion. CI was triggered by the resulting GitHub commits; CI/runtime/browser/deployment evidence is not claimed until the corresponding run and later Phase 14 verification provide concrete evidence.
+
+### Post-Phase-14 Deep Audit & Access-Flow Amendment — 2026-09-23
+
+A repository-wide deep audit was performed after Phase 14 implementation, covering the accumulated Phase 0–14 contracts, current routing, Firebase authorization boundaries, clinic provisioning, CI/release checks, and cross-phase integration.
+
+Concrete defects/drift found and repaired:
+- Clinic admin retry handling referenced a callback scoped only inside useEffect; the loader is now a stable useCallback, so the documented retry action is actually callable.
+- The clinic provisioning flow was still based on a generated temporary password plus a password-reset link, which did not match the intended controlled handoff. Provisioning now accepts a platform-owner-entered temporary password, creates a new Firebase Auth account, and marks the membership mustChangePassword: true.
+- Clinic owners are routed to a dedicated first-login password setup screen before accessing the clinic workspace.
+- The permanent password is changed through Firebase Authentication and the setup state is cleared only by a trusted callable.
+- The trusted completion function verifies Firebase Auth passwordUpdatedAt is newer than the provisioning baseline before clearing mustChangePassword; therefore a client cannot simply call the completion function and bypass the password-change step.
+- Temporary and permanent clinic passwords are intentionally not kept in React state, Firestore, localStorage, sessionStorage, or source code. The temporary password exists only as form data during provisioning, and the permanent password only as transient form data during the authenticated password-change operation.
+- The legacy /clinic/login compatibility route now returns to the central entry router after authentication, so it cannot bypass first-login routing.
+- Contract smoke coverage was extended for the new first-login password boundary.
+
+The amendment preserves the existing Firebase Auth + Firestore membership model and does not replace backend authorization with frontend routing. Runtime/security/browser verification remains pending and is not implied by these repository repairs.
 
 ### Phase 14 — Full Verification, Integration & Commercial Release
 - G14.1 Combined Firebase Runtime Verification — **IMPLEMENTED / PENDING RUNTIME EVIDENCE**
