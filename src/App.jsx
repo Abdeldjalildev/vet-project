@@ -13,13 +13,30 @@ import PlatformOwnerDashboard from './components/PlatformOwnerDashboard'
 import ClinicFirstPassword from './components/ClinicFirstPassword'
 import PublicClinicPage from './components/PublicClinicPage'
 import VetLifeEntry from './components/VetLifeEntry'
-import { getPlatformOwnerClaim } from './lib/auth'
+import { getClinicMembership, getPlatformOwnerClaim } from './lib/auth'
 import { useTranslation } from 'react-i18next'
 
 function ClinicRoute() {
   const { user, authLoading } = useAuth()
   const { t } = useTranslation()
   const path = window.location.pathname
+  const [membershipState, setMembershipState] = useState('loading')
+
+  useEffect(() => {
+    if (!user || path === '/clinic/login' || path === '/clinic/first-password') {
+      setMembershipState('ready')
+      return
+    }
+    getClinicMembership(user.uid)
+      .then((membership) => {
+        if (membership?.mustChangePassword === true) {
+          window.location.replace('/clinic/first-password')
+          return
+        }
+        setMembershipState('ready')
+      })
+      .catch(() => setMembershipState('error'))
+  }, [user, path])
 
   if (authLoading) return <RouteState message={t('checkingClinicSession')} />
 
@@ -28,6 +45,8 @@ function ClinicRoute() {
   }
 
   if (!user) return <Redirect path="/" />
+  if (membershipState === 'loading') return <RouteState message={t('checkingClinicSession')} />
+  if (membershipState === 'error') return <RouteState message={t('adminAccessError')} />
 
   if (path === '/clinic/first-password') return <ClinicFirstPassword />
 
