@@ -13,7 +13,7 @@ import PlatformOwnerDashboard from './components/PlatformOwnerDashboard'
 import ClinicFirstPassword from './components/ClinicFirstPassword'
 import PublicClinicPage from './components/PublicClinicPage'
 import VetLifeEntry from './components/VetLifeEntry'
-import { getClinicMembership, getPlatformOwnerClaim } from './lib/auth'
+import { getPlatformOwnerClaim } from './lib/auth'
 import { useTranslation } from 'react-i18next'
 
 function ClinicRoute() {
