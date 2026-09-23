@@ -153,12 +153,17 @@ The audit also identified release-test boundaries that remain intentionally unre
 The same pass identified an imminent GitHub Actions maintenance issue: the workflow used `actions/checkout@v4` and `actions/setup-node@v4`, whose action runtimes were emitting Node 20 deprecation warnings on the current runner. The workflow was migrated to the Node 24-compatible v5 action runtimes while retaining Node 20 as the installed project runtime required by the Functions engine. This separates the Actions runner runtime from the application's Node 20 compatibility requirement.
 
 ### Phase 12 — Product Architecture & Access Flow
-- G12.1 Architecture Amendment, Entry & Routing Contract — **PLANNED / NOT IMPLEMENTED**
-- G12.2 Platform Owner Authorization & Clinic Provisioning — **PLANNED / NOT IMPLEMENTED**
-- G12.3 Clinic Lifecycle & Public Access — **PLANNED / NOT IMPLEMENTED**
-- G12.4 Architecture Regression & Contract Verification — **PLANNED / NOT IMPLEMENTED**
+- G12.1 Architecture Amendment, Entry & Routing Contract — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G12.2 Platform Owner Authorization & Clinic Provisioning — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G12.3 Clinic Lifecycle & Public Access — **IMPLEMENTED / PENDING RUNTIME CLOSURE**
+- G12.4 Architecture Regression & Contract Verification — **IMPLEMENTED / PENDING CI + RUNTIME CLOSURE**
 
-Phase 12 extends the frozen architecture only for the explicitly approved entry, Platform Owner, provisioning, lifecycle, and public-access boundaries. It does not reopen unrelated Phase 0–11 decisions.
+Phase 12 implementation is complete on GitHub. Runtime Firebase, custom-claim, cross-role/isolation, browser, deployment, and CI evidence remain pending for the later Phase 14 verification pass.
+
+### Phase 12 implementation record — 2026-09-23
+A repository-level implementation pass completed G12.1–G12.4 against the Phase 12 contract. The approved topology is now represented in the application: `/` is the VetLife welcome/login entry, `/clinic/*` is the clinic workspace, `/platform/*` is the Platform Owner workspace, and `/c/:clinicSlug` is the public clinic surface. Platform Owner authorization is server-controlled through the `platformOwner` Firebase custom claim; trusted callable Functions enforce the claim before clinic provisioning/listing. Provisioning creates the clinic document, canonical slug, active/provisioned lifecycle state, and owner membership atomically, with cleanup for newly created Auth users if provisioning fails. Clinic lifecycle fields (`slug`, `public`, `active`) remain platform-controlled rather than clinic-editable. Clinic public access now exposes a canonical public link and a locally generated printable QR containing only that URL. Contract-smoke coverage was extended to the new route, claim, provisioning, lifecycle, and QR boundaries.
+
+Runtime closure is intentionally not claimed. In particular, the bootstrap custom claim must be applied from a privileged environment, callable Functions must be deployed to the intended Firebase project, and browser/Firebase Rules/isolation behavior must be exercised later with concrete evidence.
 
 ### Phase 13 — VetLife Experience & Commercial UI Restoration
 - G13.1 Original VetLife Visual Identity Restoration — **PLANNED / NOT IMPLEMENTED**
