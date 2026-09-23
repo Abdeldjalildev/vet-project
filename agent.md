@@ -152,15 +152,46 @@ A final repository-level audit across Phases 0–11 found two remaining implemen
 The audit also identified release-test boundaries that remain intentionally unresolved until the local verification pass: no Functions lockfile exists, the current contract smoke suite is structural rather than emulator/browser behavior testing, App Check/rate-control is not yet enforced on public callable endpoints, and npm reports dependency vulnerabilities. These are release verification/remediation items, not grounds to invent closure evidence.
 The same pass identified an imminent GitHub Actions maintenance issue: the workflow used `actions/checkout@v4` and `actions/setup-node@v4`, whose action runtimes were emitting Node 20 deprecation warnings on the current runner. The workflow was migrated to the Node 24-compatible v5 action runtimes while retaining Node 20 as the installed project runtime required by the Functions engine. This separates the Actions runner runtime from the application's Node 20 compatibility requirement.
 
+### Phase 12 — Product Architecture & Access Flow
+- G12.1 Architecture Amendment, Entry & Routing Contract — **PLANNED / NOT IMPLEMENTED**
+- G12.2 Platform Owner Authorization & Clinic Provisioning — **PLANNED / NOT IMPLEMENTED**
+- G12.3 Clinic Lifecycle & Public Access — **PLANNED / NOT IMPLEMENTED**
+- G12.4 Architecture Regression & Contract Verification — **PLANNED / NOT IMPLEMENTED**
+
+Phase 12 extends the frozen architecture only for the explicitly approved entry, Platform Owner, provisioning, lifecycle, and public-access boundaries. It does not reopen unrelated Phase 0–11 decisions.
+
+### Phase 13 — VetLife Experience & Commercial UI Restoration
+- G13.1 Original VetLife Visual Identity Restoration — **PLANNED / NOT IMPLEMENTED**
+- G13.2 Dynamic Content Inside the VetLife Identity — **PLANNED / NOT IMPLEMENTED**
+- G13.3 Public Link, QR & Clinic Discovery UX — **PLANNED / NOT IMPLEMENTED**
+- G13.4 Commercial UX Consistency — **PLANNED / NOT IMPLEMENTED**
+
+Phase 13 restores the original VetLife public product identity and integrates the existing managed-data model without weakening its contracts.
+
+### Phase 14 — Full Verification, Integration & Commercial Release
+- G14.1 Combined Firebase Runtime Verification — **PLANNED / NOT IMPLEMENTED**
+- G14.2 Security & Isolation Verification — **PLANNED / NOT IMPLEMENTED**
+- G14.3 Browser, Responsive & Accessibility Verification — **PLANNED / NOT IMPLEMENTED**
+- G14.4 CI, Deployment & Full Regression — **PLANNED / NOT IMPLEMENTED**
+- G14.5 Progressive Phase Closure & Commercial Release — **PLANNED / NOT IMPLEMENTED**
+
+Phase 14 is verification/release only. It must not be used to introduce unrelated product scope.
+
 ## 1. Mission
 
 VetLife is being transformed into a real product that can be customized and sold to veterinary clinics.
 
-The target product has two connected interfaces:
+The target product has three controlled product surfaces:
 
-1. **Public Customer Interface**
-   - Clinic website
-   - Services
+1. **VetLife Entry & Authentication**
+   - Welcoming VetLife login/entry experience
+   - Firebase Authentication
+   - Routing based on authenticated identity and authorized role
+   - No public clinic content is exposed as the default application entry
+
+2. **Public Customer Interface**
+   - Canonical clinic public page
+   - Clinic services
    - About
    - FAQ
    - Contact/social links
@@ -168,45 +199,45 @@ The target product has two connected interfaces:
    - Multilingual public experience
    - Analytics event generation
 
-2. **Clinic/Admin Interface**
-   - Authenticated clinic access
-   - Sidebar dashboard
-   - Appointment management
-   - Services management
-   - Clinic profile/settings
-   - Website/content management
-   - FAQ/social/footer management
-   - Analytics
-   - Independent admin language
+3. **Authenticated Management Interfaces**
+   - Clinic/Admin workspace
+   - Platform Owner workspace
+   - Clinic-specific appointment/content/service/analytics management
+   - Platform-level clinic provisioning and lifecycle management
 
-Both interfaces use the same backend and are linked by a secure `clinicId` boundary.
+The public and clinic interfaces remain linked by a secure `clinicId` boundary. Platform Owner authorization is a separate security boundary and must never be implemented as a frontend-only UID/email check.
 
 ---
 
 ## 2. Target Architecture
 
 ```
-                    VetLife Platform
-                           |
-              +------------+------------+
-              |                         |
-       Public Customer UI        Clinic Admin UI
-              |                         |
-        /c/:clinicSlug            /clinic/*
-              |                         |
-              +------------+------------+
-                           |
-                    Application/Data Layer
-                           |
-              +------------+------------+
-              |            |             |
-         Firebase Auth  Firestore   Cloud Functions
-                           |
+                         VetLife Platform
+                               |
+                    +----------+----------+
+                    |                     |
+              Entry / Auth         Platform Owner
+                    |                     |
+                    |              /platform/*
+                    |
+          +---------+----------------------+
+          |                                |
+    Clinic/Admin                      Public Clinic
+     /clinic/*                        /c/:clinicSlug
+          |                                |
+          +---------------+----------------+
+                          |
+                 Application/Data Layer
+                          |
+             +------------+-------------+
+             |            |              |
+        Firebase Auth  Firestore    Cloud Functions
+                          |
                        clinicId
-                           |
-              +------------+------------+
-              |                         |
-          Clinic A data              Clinic B data
+                          |
+             +------------+-------------+
+             |                          |
+         Clinic A data             Clinic B data
 ```
 
 ### Core principles
@@ -214,14 +245,59 @@ Both interfaces use the same backend and are linked by a secure `clinicId` bound
 - Firebase is the primary backend platform.
 - Firebase Authentication handles identity.
 - Firestore stores application data.
-- Firestore Security Rules enforce data boundaries.
-- Cloud Functions are used only where trusted server-side execution is required.
-- `clinicId` is the tenant/data-isolation key.
+- Firestore Security Rules enforce clinic data boundaries.
+- Cloud Functions are used where trusted server-side execution is required.
+- `clinicId` is the tenant/data-isolation key for clinic-owned data.
 - A URL parameter alone is never a security boundary.
-- Authentication membership and backend/database authorization are the security boundary.
+- Authentication membership and backend/database authorization are the clinic security boundary.
+- Platform Owner is a distinct platform-level authorization boundary above clinic membership.
+- Platform Owner privileges must be established by trusted server-side authorization, such as a controlled Firebase custom claim, and must never be granted by client-side profile fields, email strings, hidden routes, or local storage.
+- Clinic provisioning is a trusted platform operation. A client must not be able to arbitrarily create clinics or memberships.
+- The canonical public clinic identity is a controlled slug mapped to a provisioned clinic.
+- The QR code represents only the canonical public clinic URL; it must never contain credentials, session tokens, or private clinic data.
+- The original VetLife visual identity is code-owned and remains the base public experience. Firestore-managed content and constrained branding may populate that experience but must not turn it into an arbitrary page builder.
 - The initial commercial deployment may be one deployment/configuration per clinic, while the architecture remains clinicId-aware.
 - Do not build a full SaaS billing/multi-tenant control plane unless explicitly requested.
 
+### Identity and authorization flow
+
+Clinic access:
+
+```
+Firebase Auth UID
+      ↓
+users/{uid} membership
+      ↓
+clinicId + role
+      ↓
+Firestore Rules / trusted server operation
+```
+
+Platform Owner access:
+
+```
+Firebase Auth UID
+      ↓
+trusted platform authorization
+      ↓
+Platform Owner capability
+      ↓
+trusted provisioning / platform operations
+```
+
+The platform authorization source must be server-controlled. A frontend route guard may improve UX, but it is never the authoritative security boundary.
+
+### Canonical route contract introduced by the architecture extension
+
+```
+/                       → VetLife welcome/login entry
+/clinic/*               → authenticated clinic workspace
+/platform/*             → authenticated Platform Owner workspace
+/c/:clinicSlug          → public clinic experience
+/c/:clinicSlug/book     → public clinic booking flow
+```
+
+Exact sub-routes may be refined during Phase 12 only when they remain consistent with the security and public-link contract.
 ---
 
 ## 3. Firebase Policy
@@ -253,6 +329,68 @@ clinicId + role
       ↓
 Firestore Rules / trusted server operation
 ```
+
+---
+
+## 3A. Architecture Extension Contract
+
+The original Phase 0 architecture freeze remains authoritative for existing clinic domain, data ownership, authentication, Firestore, appointment, multilingual, analytics, and deployment boundaries.
+
+Phases 12–14 add an explicit product-architecture extension for:
+
+- VetLife welcome/login entry;
+- Platform Owner authorization;
+- platform-level clinic provisioning;
+- clinic lifecycle;
+- canonical public clinic routing;
+- public-link management;
+- QR generation/printing;
+- restoration of the original VetLife public visual identity.
+
+This extension does not reopen unrelated Phase 0 decisions and must not weaken the existing clinic isolation or trusted-operation model. Where a Phase 12 requirement necessarily changes the old routing/access description, the Phase 12 contract is the explicit successor for that routing/access behavior.
+
+### Platform Owner boundary
+
+The Platform Owner is not a clinic role.
+
+- Clinic roles remain the approved clinic membership roles used by existing Rules.
+- Platform Owner authorization is independent of `users/{uid}.clinicId + role`.
+- Platform Owner operations that create or provision clinics must execute through trusted server-side code.
+- Client-selected clinic IDs, local storage values, email comparisons, or hidden UI routes are insufficient to authorize platform operations.
+- Platform Owner access must not grant implicit access to every clinic document through a broad client-side rule; operations should use explicit trusted paths and least privilege.
+
+### Clinic provisioning boundary
+
+A provisioned clinic must have a deterministic identity and lifecycle state.
+
+At minimum the trusted provisioning flow must establish:
+
+1. clinic document;
+2. canonical public slug;
+3. owner/admin membership;
+4. required account/invitation state;
+5. active/provisioned lifecycle state only when the provisioning operation authorizes it.
+
+No public client flow may self-provision a clinic.
+
+### Public-link and QR boundary
+
+The public clinic link is canonical and non-sensitive.
+
+- It resolves to the provisioned clinic's public route.
+- It is safe to copy/share publicly.
+- QR generation encodes only that canonical public URL.
+- QR output must not expose Auth state, membership IDs, credentials, private document paths, or admin URLs.
+
+### Visual identity boundary
+
+The baseline VetLife public experience is the product's visual identity.
+
+- Preserve the baseline's recognizable Navbar, Hero, Services, About, FAQ, Footer, booking CTA, gradients, spacing, responsive behavior, and dark-mode direction.
+- Dynamic clinic content must fit the existing component contract.
+- Constrained branding fields may customize approved colors/logo/content only.
+- No arbitrary HTML/CSS/page-builder capability is introduced.
+- Visual restoration is a product requirement, not merely optional cosmetic polish.
 
 ---
 
@@ -930,6 +1068,250 @@ Produce a final release report proving the product is ready for the first real c
 
 ---
 
+## Phase 12 — Product Architecture & Access Flow
+
+**Objective:** Extend the frozen VetLife architecture with the controlled product entry flow, Platform Owner boundary, clinic provisioning/lifecycle, and canonical public access model.
+
+Phase 12 is implementation work. Its runtime/security evidence remains pending until the later verification pass. It must not silently reopen or weaken the existing Phase 0–11 contracts.
+
+### Gate 12.1 — Architecture Amendment, Entry & Routing Contract
+
+Define and implement the approved product entry topology:
+
+```
+/                       → VetLife welcome/login
+/clinic/*               → authenticated clinic workspace
+/platform/*             → authenticated Platform Owner workspace
+/c/:clinicSlug          → public clinic page
+/c/:clinicSlug/book     → public booking
+```
+
+Prove by repository evidence that:
+- the default entry is the VetLife welcome/login experience;
+- authenticated users are routed according to authorized identity/capability;
+- clinic routes remain protected;
+- Platform Owner routes have a distinct authorization boundary;
+- public clinic routes remain accessible only for intentionally public/active clinics;
+- no route guard is treated as backend security.
+
+### Gate 12.2 — Platform Owner Authorization & Clinic Provisioning
+
+Implement a trusted Platform Owner model.
+
+Requirements:
+- Platform Owner is distinct from clinic owner/admin membership;
+- authorization is established by trusted server-side control;
+- platform clinic creation/provisioning is not a client-authorized Firestore write;
+- provisioning creates/establishes the clinic identity, canonical slug, owner/admin membership, and required lifecycle state;
+- arbitrary client-selected clinic IDs cannot create or claim a clinic;
+- existing clinic isolation remains intact.
+
+The implementation may use a controlled Firebase custom claim or an equivalent trusted server-side authorization mechanism, but must not use frontend-only UID/email checks as the authoritative boundary.
+
+### Gate 12.3 — Clinic Lifecycle & Public Access
+
+Implement the clinic lifecycle and canonical public identity.
+
+Requirements:
+- deterministic clinic identity;
+- unique/canonical public slug;
+- explicit active/provisioned state;
+- public lookup resolves only to the intended clinic;
+- inactive/unpublished clinics are not exposed publicly;
+- clinic admin can see its canonical public link;
+- clinic ownership remains derived from authenticated membership rather than a client-selected clinicId;
+- existing appointment/content/analytics security boundaries remain unchanged.
+
+### Gate 12.4 — Architecture Regression & Contract Verification
+
+Add targeted repository/contract checks for the new architecture without weakening existing tests.
+
+Verify structurally that:
+- route topology matches the contract;
+- Platform Owner authorization cannot be represented only by frontend state;
+- provisioning uses trusted server execution;
+- clinic public lookup remains bounded;
+- QR/public-link implementation cannot carry sensitive data;
+- existing clinic authorization helpers and Rules remain authoritative.
+
+Runtime Firebase/browser security evidence is deferred to Phase 14.
+
+**Phase 12 closes only when all four gates have implementation evidence and the later runtime evidence required by the Definition of Done is available.**
+
+---
+
+## Phase 13 — VetLife Experience & Commercial UI Restoration
+
+**Objective:** Restore the original VetLife public product identity while keeping all Phase 1–10 data, security, multilingual, analytics, and reliability contracts intact.
+
+### Gate 13.1 — Original VetLife Visual Identity Restoration
+
+Restore the baseline VetLife public experience, using the known baseline implementation as the visual reference.
+
+The restored experience must cover:
+- Navbar and VetLife branding;
+- Hero and primary CTA;
+- Services cards and visual differentiation;
+- About section;
+- FAQ interaction;
+- Footer and social presentation;
+- booking presentation/CTA;
+- dark mode;
+- responsive layout;
+- established spacing, typography, gradients, and visual hierarchy.
+
+Do not replace the baseline identity with a generic dashboard/template aesthetic.
+
+### Gate 13.2 — Dynamic Content Inside the VetLife Identity
+
+Integrate the existing Firestore-driven clinic configuration/content into the restored visual system.
+
+Requirements:
+- Firestore remains the source of truth for approved clinic-managed content;
+- dynamic services, FAQs, profile, hero/about/footer and approved branding remain functional;
+- missing/empty data has safe fallback states;
+- dynamic content cannot inject arbitrary HTML/CSS;
+- constrained branding cannot destroy layout or accessibility;
+- public/admin language independence remains intact;
+- RTL/LTR behavior remains correct.
+
+### Gate 13.3 — Public Link, QR & Clinic Discovery UX
+
+Complete the clinic-facing public-access experience.
+
+Requirements:
+- clinic admin can view and copy the canonical public link;
+- QR Code page exists in the clinic admin workspace;
+- QR preview is accurate;
+- QR is printable;
+- QR encodes only the canonical public clinic URL;
+- no credentials, private paths, tokens, or admin routes are encoded;
+- public page opened through the QR behaves identically to the canonical public URL.
+
+### Gate 13.4 — Commercial UX Consistency
+
+Reconcile the restored public experience with the existing production UX contract.
+
+Verify implementation consistency for:
+- loading/error/empty states;
+- accessibility semantics;
+- responsive behavior;
+- multilingual/RTL behavior;
+- booking reliability;
+- analytics event behavior;
+- public clinic isolation;
+- admin/public synchronization.
+
+Do not perform unrelated visual redesign outside the approved VetLife identity.
+
+**Phase 13 closes only after implementation evidence exists and Phase 14 provides the required browser/runtime evidence.**
+
+---
+
+## Phase 14 — Full Verification, Integration & Commercial Release
+
+**Objective:** Perform the combined evidence pass for the complete VetLife product and close the remaining phases progressively.
+
+Phase 14 is verification/release work. It must not become a place to silently add new product scope.
+
+### Gate 14.1 — Combined Firebase Runtime Verification
+
+Verify integrated runtime behavior for:
+- Auth;
+- Firestore;
+- Rules;
+- clinic membership;
+- clinic provisioning;
+- public clinic lookup;
+- booking;
+- appointment lifecycle;
+- services/content;
+- i18n persistence and RTL/LTR;
+- analytics;
+- revenue/value aggregation.
+
+Every result must be backed by concrete evidence. Unrun checks remain **NOT VERIFIED**.
+
+### Gate 14.2 — Security & Isolation Verification
+
+Explicitly verify:
+- unauthenticated access denial;
+- clinic A vs clinic B isolation;
+- role boundaries;
+- Platform Owner authorization;
+- client inability to self-provision clinics;
+- protected Firestore reads/writes;
+- trusted appointment operations;
+- analytics write boundaries;
+- public/private clinic boundaries;
+- no sensitive data in public links or QR payloads;
+- production App Check/rate-control requirements where applicable.
+
+### Gate 14.3 — Browser, Responsive & Accessibility Verification
+
+Verify the actual product in supported browser/device contexts:
+- welcome/login;
+- clinic admin;
+- Platform Owner;
+- public clinic page;
+- booking;
+- QR/public-link flow;
+- Arabic/English/French;
+- RTL/LTR;
+- mobile/tablet/desktop;
+- keyboard/focus/labels/contrast;
+- loading/error/empty/retry states.
+
+Visual verification must use the restored VetLife identity as the acceptance reference.
+
+### Gate 14.4 — CI, Deployment & Full Regression
+
+Verify:
+- automated tests;
+- production build;
+- dependency installation behavior;
+- Functions dependency reproducibility boundary;
+- deployment;
+- deployed Firebase integration;
+- rollback/deployment evidence;
+- complete regression across Phases 0–13.
+
+Known unresolved release items, including the Functions lockfile boundary, App Check/rate-control enforcement, and dependency vulnerabilities, must be either remediated or explicitly documented as release blockers before the final gate.
+
+### Gate 14.5 — Progressive Phase Closure & Commercial Release
+
+Close Phases 1–14 progressively based on their actual evidence.
+
+For every closure:
+```
+Requirement
+↓
+Implementation
+↓
+Runtime / security behavior
+↓
+Evidence
+↓
+Pass / Fail
+↓
+Gate closed
+↓
+Phase closed
+```
+
+Do not mark a gate or phase CLOSED merely because its implementation exists.
+
+The final commercial release gate requires:
+- all required gates closed;
+- no unresolved critical security/data-integrity issue;
+- deployment evidence;
+- regression evidence;
+- release report;
+- explicit confirmation that the product definition is satisfied.
+
+
+---
+
 # 9. Strict AI Agent Engineering Rules
 
 These rules are permanent unless explicitly changed by the project owner.
@@ -1283,9 +1665,15 @@ Evidence
 Gate closed
 ```
 
-A Phase is done only when all five Gates are closed.
+A Phase is done only when every Gate defined for that Phase is closed.
 
-VetLife is commercially ready only when all Phase 0–11 release requirements are satisfied.
+For the current roadmap:
+- Phases 0–11 retain their existing five-gate structure.
+- Phase 12 contains four implementation gates.
+- Phase 13 contains four implementation gates.
+- Phase 14 contains five verification/release gates.
+
+VetLife is commercially ready only when all required Phase 0–14 release requirements are satisfied.
 
 ---
 
@@ -1329,6 +1717,15 @@ Do not automatically continue into the next Gate unless explicitly instructed.
 # 12. Final Product Definition
 
 At release, VetLife must provide:
+
+### Product Entry & Platform Management
+- VetLife welcome/login entry
+- secure Firebase Authentication
+- distinct Platform Owner workspace
+- trusted clinic provisioning
+- explicit clinic lifecycle
+- canonical public clinic links
+- printable QR codes for clinic public pages
 
 ### Public Customer Experience
 - clinic-branded website
@@ -1382,7 +1779,7 @@ The following are intentionally deferred:
 - laboratory
 - full veterinary medical records
 - SaaS subscription billing
-- self-service clinic onboarding
+- self-service clinic onboarding (the current MVP uses Platform Owner-controlled provisioning)
 - advanced marketing attribution
 - advanced BI/reporting
 
