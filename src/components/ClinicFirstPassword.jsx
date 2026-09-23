@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthProvider'
-import { changePasswordAndCompleteSetup } from '../lib/auth'
+import { changePasswordAndCompleteSetup, getClinicMembership } from '../lib/auth'
 
 export default function ClinicFirstPassword() {
   const { user, signOut } = useAuth()
@@ -10,10 +10,29 @@ export default function ClinicFirstPassword() {
   const [confirmation, setConfirmation] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [checking, setChecking] = useState(true)
 
-  if (!user) {
-    window.location.replace('/')
-    return null
+  useEffect(() => {
+    if (!user) {
+      window.location.replace('/')
+      return
+    }
+    getClinicMembership(user.uid)
+      .then((membership) => {
+        if (membership?.mustChangePassword !== true) {
+          window.location.replace('/clinic/dashboard')
+          return
+        }
+        setChecking(false)
+      })
+      .catch(() => {
+        setError(t('passwordSetupFailed'))
+        setChecking(false)
+      })
+  }, [user, t])
+
+  if (!user || checking) {
+    return <main className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-gray-950"><p className="text-sm font-semibold text-slate-600 dark:text-gray-300">{t('checkingClinicSession')}</p></main>
   }
 
   const submit = async (event) => {
