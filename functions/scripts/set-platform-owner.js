@@ -13,7 +13,6 @@ if (!email) {
 async function main() {
   const normalizedEmail = email.trim().toLowerCase()
   const user = await getAuth().getUserByEmail(normalizedEmail)
-  if (!user.emailVerified) throw new Error('Platform Owner account email must be verified before the claim is granted.')
   const existingClaims = user.customClaims || {}
   await getAuth().setCustomUserClaims(user.uid, {
     ...existingClaims,
