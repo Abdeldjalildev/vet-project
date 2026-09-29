@@ -1,11 +1,6 @@
 import { addDoc, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore'
-import { httpsCallable } from 'firebase/functions'
-import { getFunctions } from 'firebase/functions'
-import { firebaseApp } from './firebase'
 import { clinicServicesRef, firestore } from './firestore'
-
-const functions = getFunctions(firebaseApp, 'us-central1')
-const deleteClinicServiceCall = httpsCallable(functions, 'deleteClinicService')
+import { callNetlifyFunction } from './apiClient'
 
 const normalizeLocalized = (value) => ({
   ar: typeof value?.ar === 'string' ? value.ar.trim() : '',
@@ -67,6 +62,6 @@ export const setClinicServiceActive = async (clinicId, serviceId, active) => {
 }
 
 export const deleteClinicService = async (clinicId, serviceId) => {
-  const result = await deleteClinicServiceCall({ clinicId, serviceId })
-  return result.data
+  const { data } = await callNetlifyFunction('deleteClinicService', { clinicId, serviceId }, { authRequired: true })
+  return data
 }

@@ -1,9 +1,6 @@
-import { httpsCallable, getFunctions } from 'firebase/functions'
-import { firebaseApp } from './firebase'
 import { clinicAnalyticsAggregatesRef } from './firestore'
 import { getDocs, limit, orderBy, query } from 'firebase/firestore'
-
-const functions = getFunctions(firebaseApp, 'us-central1')
+import { callNetlifyFunction } from './apiClient'
 
 const ANALYTICS_KEYS = {
   visitor: 'vetlife_visitor_id',
@@ -44,8 +41,8 @@ export const trackAnalyticsEvent = async ({
   language,
   eventId = crypto.randomUUID(),
 }) => {
-  const callable = httpsCallable(functions, 'recordAnalyticsEvent')
-  return callable({
+  // Public endpoint: no ID token is required (the caller may be an anonymous visitor).
+  return callNetlifyFunction('recordAnalyticsEvent', {
     clinicId,
     eventType,
     page,

@@ -1,30 +1,25 @@
 import { getDocs, limit, orderBy, query } from 'firebase/firestore'
-import { httpsCallable } from 'firebase/functions'
-import { getFunctions } from 'firebase/functions'
-import { firebaseApp } from './firebase'
 import { clinicAppointmentsRef } from './firestore'
-
-const functions = getFunctions(firebaseApp, 'us-central1')
-const createPublicAppointmentCall = httpsCallable(functions, 'createPublicAppointment')
-const transitionAppointmentCall = httpsCallable(functions, 'transitionAppointment')
+import { callNetlifyFunction } from './apiClient'
 
 export const createPublicAppointment = async (clinicId, appointment) => {
-  const result = await createPublicAppointmentCall({
+  // Public endpoint: no ID token is required (the caller is an unauthenticated visitor).
+  const { data } = await callNetlifyFunction('createPublicAppointment', {
     clinicId,
     ...appointment,
   })
 
-  return result.data.appointmentId
+  return data.appointmentId
 }
 
 export const transitionAppointment = async (clinicId, appointmentId, status) => {
-  const result = await transitionAppointmentCall({
+  const { data } = await callNetlifyFunction('transitionAppointment', {
     clinicId,
     appointmentId,
     status,
-  })
+  }, { authRequired: true })
 
-  return result.data
+  return data
 }
 
 export const listClinicAppointments = async (clinicId) => {

@@ -10,7 +10,7 @@ import {
 import { firebaseApp } from './firebase'
 import { getDoc } from 'firebase/firestore'
 import { userRef } from './firestore'
-import { getFunctions, httpsCallable } from 'firebase/functions'
+import { callNetlifyFunction } from './apiClient'
 
 export const firebaseAuth = getAuth(firebaseApp)
 
@@ -21,8 +21,6 @@ export const signInClinicUser = async (email, password) => {
 
 export const signOutClinicUser = () => signOut(firebaseAuth)
 
-const functions = getFunctions(firebaseApp, 'us-central1')
-
 export const getClinicMembership = async (uid) => {
   const snapshot = await getDoc(userRef(uid))
   return snapshot.exists() ? snapshot.data() : null
@@ -30,8 +28,7 @@ export const getClinicMembership = async (uid) => {
 
 export const changePasswordAndCompleteSetup = async (user, newPassword) => {
   await updatePassword(user, newPassword)
-  const complete = httpsCallable(functions, 'completeClinicPasswordSetup')
-  await complete({})
+  await callNetlifyFunction('completeClinicPasswordSetup', {}, { authRequired: true })
 }
 
 export const getPlatformOwnerClaim = async (user, forceRefresh = false) => {

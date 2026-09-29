@@ -101,7 +101,7 @@ export default function ClinicServicesAdmin({ clinicId }) {
       await deleteClinicService(clinicId, service.serviceId)
       await load()
     } catch (deleteError) {
-      setError(deleteError?.code === 'functions/failed-precondition' ? t('serviceInUse') : (deleteError.message || 'SERVICE_DELETE_FAILED'))
+      setError(deleteError?.code === 'failed-precondition' ? t('serviceInUse') : (deleteError.message || 'SERVICE_DELETE_FAILED'))
     }
   }
 
