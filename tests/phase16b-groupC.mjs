@@ -779,7 +779,7 @@ console.log('\n--- TEST GROUP 10: recordAnalyticsEvent clinic availability & ato
   console.log('✓ 412 availability, atomicity, replay-before-availability ordering: PASS')
 }
 
-console.log('\n--- TEST GROUP 11: preserved callable contract (source parity) ---')
+console.log('\n--- TEST GROUP 11: preserved operation contract (source parity) ---')
 {
   const read = (relativePath) => readFileSync(new URL('../' + relativePath, import.meta.url), 'utf8')
 
@@ -810,10 +810,17 @@ console.log('\n--- TEST GROUP 11: preserved callable contract (source parity) --
   assert.match(analyticsSource, /uniqueVisitors/)
   assert.match(analyticsSource, /bookingsCompleted/)
 
-  // The original callables stay present and untouched: this migration is strictly additive.
+  // The legacy Firebase callables these handlers replaced were decommissioned in the same
+  // milestone, after every caller had been cut over to the Netlify transport. This suite keeps
+  // asserting the preserved behavior and Netlify source parity above; the post-decommission
+  // contract (Netlify handler present, legacy export absent, no active callable caller) is owned
+  // by tests/phase16-netlify-cutover.mjs.
   const functionsSource = read('functions/index.js')
   for (const exportName of ['transitionAppointment', 'completeClinicPasswordSetup', 'recordAnalyticsEvent', 'deleteClinicService']) {
-    assert.match(functionsSource, new RegExp(`exports\\.${exportName} = onCall`))
+    assert.ok(
+      !new RegExp('exports\\.' + exportName + '\\b').test(functionsSource),
+      exportName + ' must no longer be implemented as a Firebase callable',
+    )
   }
 
   // Environment limitation (documented, not worked around by changing production behavior):
@@ -825,7 +832,7 @@ console.log('\n--- TEST GROUP 11: preserved callable contract (source parity) --
   // `passwordSetupIssuedAt` below that value (a truthy negative bound), which executes the real
   // comparison, the real Auth lookup and the real Firestore update without mocking anything.
 
-  console.log('✓ Source parity with the preserved Firebase callables: PASS')
+  console.log('✓ Source parity with the preserved operation contract: PASS')
 }
 
 console.log('\n--- CLEANUP ---')

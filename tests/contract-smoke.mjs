@@ -8,6 +8,16 @@ const firebaseJson = JSON.parse(read('firebase.json'))
 const functionsPackage = JSON.parse(read('functions/package.json'))
 const rules = read('firestore.rules')
 const functions = read('functions/index.js')
+const netlifyFunctions = {
+  provisionClinic: read('netlify/functions/provisionClinic.js'),
+  listProvisionedClinics: read('netlify/functions/listProvisionedClinics.js'),
+  createPublicAppointment: read('netlify/functions/createPublicAppointment.js'),
+  transitionAppointment: read('netlify/functions/transitionAppointment.js'),
+  completeClinicPasswordSetup: read('netlify/functions/completeClinicPasswordSetup.js'),
+  recordAnalyticsEvent: read('netlify/functions/recordAnalyticsEvent.js'),
+  deleteClinicService: read('netlify/functions/deleteClinicService.js'),
+}
+const netlifyAuthLib = read('netlify/functions/lib/auth.js')
 const app = read('src/App.jsx')
 const main = read('src/main.jsx')
 const analyticsAdmin = read('src/components/ClinicAnalyticsAdmin.jsx')
@@ -49,8 +59,17 @@ assert.match(app, /path.startsWith\('\/platform\/'\)/)
 assert.match(app, /path.startsWith\('\/c\/'\)/)
 
 assert.match(main, /AppErrorBoundary/)
-for (const exportName of ['createPublicAppointment', 'recordAnalyticsEvent', 'transitionAppointment', 'deleteClinicService', 'provisionClinic', 'listProvisionedClinics', 'completeClinicPasswordSetup']) {
-  assert.match(functions, new RegExp(`exports\\.${exportName}`))
+// Phase 16: all seven trusted operations are implemented as Netlify Functions...
+for (const [operationName, source] of Object.entries(netlifyFunctions)) {
+  assert.match(source, /exports\.handler = async \(event\) => \{/, operationName + ' must export a Netlify handler')
+}
+// ...and the legacy Firebase callable implementations are decommissioned.
+assert.ok(!/exports\.\w+ = onCall\(/.test(functions), 'no Firebase callable may remain in functions/index.js')
+for (const operationName of Object.keys(netlifyFunctions)) {
+  assert.ok(
+    !new RegExp('exports\\.' + operationName + '\\b').test(functions),
+    operationName + ' must no longer be exported as a Firebase callable',
+  )
 }
 
 assert.match(rules, /match \/appointments\/{appointmentId}/)
@@ -85,9 +104,9 @@ assert.match(rules, /features\.size\(\) <= 12/)
 
 assert.match(i18nConfig, /vetlife_public_lang/)
 assert.match(i18nConfig, /vetlife_admin_lang/)
-assert.match(functions, /uuidPattern/)
-assert.match(functions, /sessionId is invalid/)
-assert.match(functions, /estimatedCompletedServiceValueByCurrency/)
+assert.match(netlifyFunctions.recordAnalyticsEvent, /uuidPattern/)
+assert.match(netlifyFunctions.recordAnalyticsEvent, /sessionId is invalid/)
+assert.match(netlifyFunctions.transitionAppointment, /estimatedCompletedServiceValueByCurrency/)
 assert.match(analyticsAdmin, /estimatedCompletedServiceValueByCurrency/)
 
 assert.match(bookingForm, /trackPublicEvent.*booking_completed/)
@@ -95,9 +114,12 @@ assert.match(bookingForm, /createPublicAppointment/)
 
 console.log('VetLife contract smoke tests: PASS')
 
-assert.match(functions, /request\.auth\.token\?\.platformOwner !== true/)
-assert.match(functions, /transaction\.create\(users\.doc\(ownerUser\.uid\)/)
-assert.ok(!functions.includes('generatePasswordResetLink'))
+assert.match(netlifyAuthLib, /decodedToken\.platformOwner !== true/)
+assert.match(netlifyAuthLib, /verifyIdToken\(token\)/)
+assert.match(netlifyFunctions.provisionClinic, /transaction\.create\(users\.doc\(ownerUser\.uid\)/)
+for (const source of [functions, ...Object.values(netlifyFunctions)]) {
+  assert.ok(!source.includes('generatePasswordResetLink'))
+}
 assert.match(functionsScript, /setCustomUserClaims/)
 assert.match(functionsScript, /platformOwner: true/)
 assert.match(auth, /getIdTokenResult/)
@@ -127,11 +149,12 @@ assert.match(publicClinic, /<VetTips \/>/)
 assert.match(publicClinic, /<BookingForm[^>]+clinic=/)
 assert.match(publicClinic, /<Footer clinic=/)
 
-assert.match(functions, /Date\.parse\(ownerUser\.passwordUpdatedAt \|\| ''\)/)
-assert.match(functions, /Date\.parse\(userRecord\.passwordUpdatedAt \|\| ''\)/)
-assert.match(functions, /temporaryPassword/)
-assert.match(functions, /mustChangePassword: true/)
-assert.match(functions, /completeClinicPasswordSetup/)
+assert.match(netlifyFunctions.provisionClinic, /Date\.parse\(ownerUser\.passwordUpdatedAt \|\| ''\)/)
+assert.match(netlifyFunctions.completeClinicPasswordSetup, /Date\.parse\(userRecord\.passwordUpdatedAt \|\| ''\)/)
+assert.match(netlifyFunctions.provisionClinic, /temporaryPassword/)
+assert.match(netlifyFunctions.provisionClinic, /mustChangePassword: true/)
+assert.match(netlifyFunctions.completeClinicPasswordSetup, /mustChangePassword !== true/)
+assert.match(netlifyFunctions.completeClinicPasswordSetup, /successResponse\(\{ completed: true \}\)/)
 assert.match(auth, /updatePassword/)
 assert.match(auth, /getClinicMembership/)
 assert.match(platformDashboard, /temporaryPassword/)
