@@ -12,18 +12,21 @@
     "test:release-readiness": "node tests/release-readiness.mjs"
   },
   "dependencies": {
+    "firebase": "^12.19.0",
+    "firebase-admin": "^13.10.0",
     "framer-motion": "^12.41.0",
     "i18next": "^26.3.2",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^1.21.0",
+    "qrcode-generator": "^2.0.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-hot-toast": "^2.6.0",
-    "react-i18next": "^17.0.8",
-    "firebase": "^12.19.0",
-    "qrcode-generator": "^2.0.4"
+    "react-i18next": "^17.0.8"
   },
   "devDependencies": {
+    "@emnapi/core": "1.11.3",
+    "@emnapi/runtime": "1.11.3",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.3.1",
     "@types/react": "^19.2.14",
