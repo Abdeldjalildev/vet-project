@@ -26,7 +26,7 @@ async function requireAuth(event) {
     const authAdmin = getAuthAdmin()
     const decodedToken = await authAdmin.verifyIdToken(token)
     return decodedToken
-  } catch (err) {
+  } catch {
     fail('unauthenticated', 'Invalid or expired authentication token.')
   }
 }

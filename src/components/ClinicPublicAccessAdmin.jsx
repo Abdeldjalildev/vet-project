@@ -7,9 +7,9 @@ export default function ClinicPublicAccessAdmin({ clinic }) {
   const [copied, setCopied] = useState(false)
 
   const publicUrl = useMemo(() => {
-    if (!clinic?.slug) return ''
+    if (!clinic || !clinic.slug) return ''
     return new URL('/c/' + encodeURIComponent(clinic.slug), window.location.origin).toString()
-  }, [clinic?.slug])
+  }, [clinic])
 
   const qrDataUrl = useMemo(() => {
     if (!publicUrl) return ''

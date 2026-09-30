@@ -6,7 +6,7 @@ const localized = (value) => ({ ar: value?.ar || '', en: value?.en || '', fr: va
 const emptyFaq = { question: { ar: '', en: '', fr: '' }, answer: { ar: '', en: '', fr: '' }, order: 0, active: true }
 
 export default function ClinicContentAdmin({ clinicId, clinic }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [content, setContent] = useState({
     hero: {
       badge: localized(clinic.hero?.badge),
@@ -30,7 +30,7 @@ export default function ClinicContentAdmin({ clinicId, clinic }) {
   const [editingFaqId, setEditingFaqId] = useState(null)
   const [status, setStatus] = useState('loading')
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
+  const [notice, setNotice] = useState('')
 
   const loadFaqs = async () => {
     try {
@@ -47,12 +47,12 @@ export default function ClinicContentAdmin({ clinicId, clinic }) {
   const saveContent = async (event) => {
     event.preventDefault()
     setSaving(true)
-    setMessage('')
+    setNotice('')
     try {
       await updateClinicContent(clinicId, content)
-      setMessage(t('contentSaved'))
+      setNotice(t('contentSaved'))
     } catch {
-      setMessage(t('contentSaveError'))
+      setNotice(t('contentSaveError'))
     } finally {
       setSaving(false)
     }
@@ -67,9 +67,9 @@ export default function ClinicContentAdmin({ clinicId, clinic }) {
       setFaq(emptyFaq)
       setEditingFaqId(null)
       await loadFaqs()
-      setMessage(t('faqSaved'))
+      setNotice(t('faqSaved'))
     } catch {
-      setMessage(t('faqSaveError'))
+      setNotice(t('faqSaveError'))
     } finally {
       setSaving(false)
     }
@@ -92,7 +92,7 @@ export default function ClinicContentAdmin({ clinicId, clinic }) {
       await deleteClinicFaq(clinicId, faqId)
       await loadFaqs()
     } catch {
-      setMessage(t('faqDeleteError'))
+      setNotice(t('faqDeleteError'))
     } finally {
       setSaving(false)
     }
@@ -140,6 +140,8 @@ export default function ClinicContentAdmin({ clinicId, clinic }) {
           <button disabled={saving} className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">{saving ? t('saving') : t('saveContent')}</button>
         </form>
       </section>
+
+      {notice && <p role="status" className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900">{notice}</p>}
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <h3 className="text-lg font-black">{t('faqManagementTitle')}</h3>
@@ -190,3 +192,4 @@ function LocalizedFields({ label, value, onChange, textarea = false }) {
 function Field({ label, value, onChange, type = 'text' }) {
   return <label className="text-sm font-bold">{label}<input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="mt-2 w-full rounded-xl border p-3 font-normal dark:border-gray-700 dark:bg-gray-950" /></label>
 }
+
