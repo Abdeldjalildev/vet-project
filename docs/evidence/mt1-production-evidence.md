@@ -373,7 +373,7 @@ production evidence for the three open defects.
 | P08-3 (causal isolation) | 7 | 5 | 1 | 1 | **FAIL** - P0-B1, fail-closed proof |
 | P08-4 (provisioning boundary) | 12 | 10 | 1 | 1 | **FAIL** - P0-B2 |
 | PHASE-J (post-run preservation) | 9 | 8 | 0 | 1 | PASS |
-| **Total** | **293** | **230** | **21** | **42** | 12 gates PASS / 2 gates FAIL end to end |
+| **Total** | **293** | **230** | **21** | **42** | 19 gates/phases: 14 PASS / 5 FAIL (MT-1.1U, MT-1.6, P08-1, P08-3, P08-4) |
 
 Of the 21 FAIL rows: **8 are superseded harness artifacts** (MT-1.1U `ENV` x2, MT-1.7 x2 - the
 unauthorized public-window query shape, MT-1.10 `F4`/`C3` - response parse, MT-1.11 `A2`/`C2` - wrong
@@ -606,7 +606,7 @@ Every MT-1 requirement in `docs/master-tests.md` section 5 maps onto the gates r
 | Realtime synchronization across independent clients | MT-1.11 + MT-1.11R | PASS |
 | Step-1 P0 repair verification (deployed surface) | P08-1, P08-3, P08-4 | **FAIL** - P0-B1, P0-B2 |
 
-Step 2 outcome: **10 of 12 MT-1 requirements PASS in production; 2 FAIL** on defects that are only
+Step 2 outcome: **9 of the 11 MT-1 requirements PASS in production; 2 FAIL** on defects that are only
 observable against the deployed topology. The failures are concentrated in one connected area - the
 lifecycle of a freshly provisioned clinic owner: provisioning (P0-B2) leaves the owner unable to
 complete the mandatory first password step (P0-B1, reproduced in the real UI), and the workspace that
@@ -658,7 +658,7 @@ why: the contract defines no cleanup path and no authorized production delete ex
 
 ## 7. Limitations, exclusions and the re-verification path
 
-**What this pack does not claim.** MT-1 does not pass in production. Ten of its twelve requirements
+**What this pack does not claim.** MT-1 does not pass in production. Nine of its eleven requirements
 were verified against the deployed topology in this session; two fail on defects that the emulator
 suites cannot observe (sections 3 and 4). No row in this pack is derived from an emulator, a mock or a
 local build.
