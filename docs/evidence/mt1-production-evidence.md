@@ -42,7 +42,7 @@ Four probe families were run against the deployed topology (no emulator is invol
 |---|---|---|
 | `%TEMP%\mt1run\evidence.jsonl` - **293 recorded rows** | every gate below, including the 2026-10-01/02/03 runs and the MT-1.6 probe of 2026-10-04 | mixed (see rows) |
 | `%TEMP%\mt1run\mt11-ui-evidence.json` (+ `-2026-10-04` copy) | the MT-1.1 browser run re-executed in this session | browser session only |
-| `%TEMP%\mt1run\p08http1.log`, `p08http2.log` | P08 boundary + anti-bypass probes | no |
+| `%TEMP%\mt1run\p08http1.log` | P08 boundary + anti-bypass probes | no |
 | `%TEMP%\mt1run\p08stamp2.log` | P08 causal isolation (three stored verifier states) | one membership field |
 | `%TEMP%\mt1run\p08provision.log` | platform-owner boundary + real provisioning attempt | one throwaway Auth identity, created and deleted |
 | `%TEMP%\mt1run\p08keys.log`, `p08lookup.log` | Admin SDK vs raw Admin API credential-field comparison | no |
