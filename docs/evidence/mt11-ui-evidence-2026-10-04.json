@@ -1,0 +1,126 @@
+{
+  "at": "2026-10-04T17:34:03.461Z",
+  "setupUsed": true,
+  "newPasswordLength": 39,
+  "results": [
+    {
+      "step": "ENV",
+      "browser": "Edg/154.0.4258.48",
+      "target": "https://vet-project-qc3h.vercel.app",
+      "ownerEmail": "mt1-clinic-alpha-owner@example.com",
+      "newPasswordLength": 39
+    },
+    {
+      "step": "UI-1",
+      "assertion": "production application opens and the SPA actually hydrates",
+      "hydrated": true,
+      "waitedMs": 3961,
+      "url": "https://vet-project-qc3h.vercel.app/",
+      "title": "vet-project",
+      "rootLen": 1219,
+      "bodyText": "VETLIFE مرحباً بك في VetLife سجّل الدخول للوصول إلى مساحة العيادة أو منصة الإدارة. البريد الإلكتروني كلمة المرور الدخول إلى VetLife",
+      "pass": true
+    },
+    {
+      "step": "UI-2",
+      "assertion": "unauthenticated user CANNOT enter the protected clinic workspace",
+      "attemptedRoute": "/clinic/dashboard",
+      "resultingPath": "/",
+      "onArrivalPath": "/",
+      "workspaceChromeShown": false,
+      "loginFormShown": false,
+      "finalBody": "VETLIFE مرحباً بك في VetLife سجّل الدخول للوصول إلى مساحة العيادة أو منصة الإدارة. البريد الإلكتروني كلمة المرور الدخول إلى VetLife",
+      "pass": true
+    },
+    {
+      "step": "UI-3",
+      "assertion": "authenticate through the actual login UI (credentials submitted via UI; no injected token)",
+      "formRendered": true,
+      "urlBefore": "/clinic/login",
+      "submittedViaUI": true,
+      "loginResolved": true,
+      "resolvedWaitMs": 3266,
+      "emailFieldAccepted": true,
+      "passwordChars": "39",
+      "urlAfter": "/clinic/first-password",
+      "firstPasswordGateShown": true,
+      "loginError": null,
+      "bodyAfter": "VETLIFE CLINIC أنشئ كلمة مرورك الخاصة هذه الخطوة إلزامية بعد تسجيل الدخول الأول. اختر كلمة مرور دائمة لا يعرفها إلا أنت. كلمة المرور الجديدة تأكيد كلمة المرور الجديدة اعتماد كلمة المرورتسجيل الخروج",
+      "pass": true
+    },
+    {
+      "step": "SETUP",
+      "assertion": "existing product first-password setup flow completed through the UI",
+      "operation": "ClinicFirstPassword -> changePasswordAndCompleteSetup -> Auth updatePassword + Netlify completeClinicPasswordSetup (sets mustChangePassword=false on the caller uid only)",
+      "submitted": true,
+      "completed": false,
+      "waitedMs": 45395,
+      "endpointCalls": [
+        "completeClinicPasswordSetup -> HTTP 412"
+      ],
+      "endpointResponseBody": "{\"error\":{\"code\":\"failed-precondition\",\"message\":\"The permanent password has not been changed yet.\"}}",
+      "before": {
+        "path": "/clinic/first-password",
+        "formShown": true
+      },
+      "after": {
+        "path": "/clinic/first-password",
+        "formShown": true,
+        "body": "VETLIFE CLINIC أنشئ كلمة مرورك الخاصة هذه الخطوة إلزامية بعد تسجيل الدخول الأول. اختر كلمة مرور دائمة لا يعرفها إلا أنت. كلمة المرور الجديدة تأكيد كلمة المرور الجديدة تعذر اعتماد كلمة المرور. حاول مرة"
+      },
+      "pass": false
+    },
+    {
+      "step": "UI-4",
+      "assertion": "authenticated owner can enter the protected clinic workspace",
+      "path": "/clinic/first-password",
+      "clinicHeading": null,
+      "headerHeading": null,
+      "userEmailShown": null,
+      "navItems": 0,
+      "signOutControls": 1,
+      "body": "VETLIFE CLINIC أنشئ كلمة مرورك الخاصة هذه الخطوة إلزامية بعد تسجيل الدخول الأول. اختر كلمة مرور دائمة لا يعرفها إلا أنت. كلمة المرور الجديدة تأكيد كلمة المرور الجديدة تعذر اعتماد كلمة المرور. حاول مرة أخرى. اعتماد كلمة المرورتسجيل الخروج",
+      "pass": false
+    },
+    {
+      "step": "UI-5",
+      "assertion": "after a REAL browser reload the session persists and the protected workspace stays accessible",
+      "reloadMethod": "CDP Page.reload (full document reload; React tree not reused)",
+      "before": {
+        "path": "/clinic/first-password",
+        "nav": 0,
+        "clinic": null,
+        "email": null
+      },
+      "after": {
+        "path": "/clinic/first-password",
+        "nav": 0,
+        "clinic": null,
+        "header": null,
+        "email": null,
+        "body": "VETLIFE CLINIC أنشئ كلمة مرورك الخاصة هذه الخطوة إلزامية بعد تسجيل الدخول الأول. اختر كلمة مرور دائمة لا يعرفها إلا أنت. كلمة المرور الجديدة تأكيد كلمة المرور الجديدة اعتماد كلمة المرورتسجيل الخروج"
+      },
+      "pass": false
+    },
+    {
+      "step": "UI-6",
+      "assertion": "the application's actual sign-out control clears the session",
+      "clickedAppSignOutControl": true,
+      "path": "/",
+      "loginFormShown": false,
+      "workspaceChromeShown": false,
+      "body": "VETLIFE مرحباً بك في VetLife سجّل الدخول للوصول إلى مساحة العيادة أو منصة الإدارة. البريد الإلكتروني كلمة المرور الدخول إلى VetLife",
+      "pass": true
+    },
+    {
+      "step": "UI-7",
+      "assertion": "after UI logout the protected clinic workspace cannot be entered",
+      "attemptedRoute": "/clinic/dashboard",
+      "resultingPath": "/",
+      "loginFormShown": false,
+      "workspaceChromeShown": false,
+      "body": "VETLIFE مرحباً بك في VetLife سجّل الدخول للوصول إلى مساحة العيادة أو منصة الإدارة. البريد الإلكتروني كلمة المرور الدخول إلى VetLife",
+      "pass": true
+    }
+  ]
+}

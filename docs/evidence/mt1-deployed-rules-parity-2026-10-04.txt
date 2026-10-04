@@ -1,0 +1,216 @@
+  releases: cloud.firestore|ruleset=66217616-e77b-4d89-8703-a11d80285e4a|updateTime=2026-10-01T12:36:22.141831Z
+  deployed ruleset=66217616-e77b-4d89-8703-a11d80285e4a updateTime=2026-10-01T12:36:22.141831Z lines=191 sha256=263a3cae0b574673
+  local    rules lines=191 sha256=263a3cae0b574673
+  DEPLOYED RULES == LOCAL firestore.rules: true
+  local firestore.indexes.json declares 2 composite index(es)
+  DEPLOYED composite indexes: 2
+  deployed rules source verbatim (9992B):
+      1| rules_version = '2';
+      2| 
+      3| service cloud.firestore {
+      4|   match /databases/{database}/documents {
+      5|     function signedIn() { return request.auth != null; }
+      6|     function membershipExists() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
+      7|     function membership() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+      8|     function activeMember() { return membershipExists() && membership().status == 'active'; }
+      9|     function memberOf(clinicId) { return activeMember() && (membership().role == 'owner' || membership().role == 'admin') && membership().clinicId == clinicId; }
+     10|     function ownerOrAdmin() { return activeMember() && (membership().role == 'owner' || membership().role == 'admin'); }
+     11| 
+     12|     function validHttpsUrl(value) {
+     13|       return value is string && (value == '' || value.matches('^https://[^ ]+$'));
+     14|     }
+     15| 
+     16|     function validLocalized(value) {
+     17|       return value is map && value.keys().hasOnly(['ar', 'en', 'fr']) &&
+     18|         value.ar is string && value.en is string && value.fr is string;
+     19|     }
+     20| 
+     21|     function validLocalizedIfPresent(data, field) {
+     22|       return !(field in data) || validLocalized(data[field]);
+     23|     }
+     24| 
+     25|     function validBranding() {
+     26|       return !('branding' in request.resource.data) || (
+     27|         request.resource.data.branding is map &&
+     28|         request.resource.data.branding.keys().hasOnly(['primaryColor', 'accentColor']) &&
+     29|         request.resource.data.branding.primaryColor is string &&
+     30|         request.resource.data.branding.accentColor is string &&
+     31|         request.resource.data.branding.primaryColor.matches('^#[0-9A-Fa-f]{6}$') &&
+     32|         request.resource.data.branding.accentColor.matches('^#[0-9A-Fa-f]{6}$')
+     33|       );
+     34|     }
+     35| 
+     36|     function validFeature(feature) {
+     37|       return feature is map &&
+     38|         feature.keys().hasOnly(['id', 'icon', 'title', 'description']) &&
+     39|         feature.icon is string &&
+     40|         validLocalized(feature.title) &&
+     41|         validLocalized(feature.description);
+     42|     }
+     43| 
+     44|     function validManagedContent() {
+     45|       return (!('hero' in request.resource.data) || (
+     46|         request.resource.data.hero is map &&
+     47|         request.resource.data.hero.keys().hasOnly(['badge', 'title', 'description']) &&
+     48|         validLocalized(request.resource.data.hero.badge) &&
+     49|         validLocalized(request.resource.data.hero.title) &&
+     50|         validLocalized(request.resource.data.hero.description)
+     51|       )) &&
+     52|       (!('about' in request.resource.data) || (
+     53|         request.resource.data.about is map &&
+     54|         request.resource.data.about.keys().hasOnly(['title', 'description', 'quote', 'features']) &&
+     55|         validLocalized(request.resource.data.about.title) &&
+     56|         validLocalized(request.resource.data.about.description) &&
+     57|         validLocalized(request.resource.data.about.quote) &&
+     58|         request.resource.data.about.features is list &&
+     59|         request.resource.data.about.features.size() <= 12 &&
+     60|         request.resource.data.about.features.all(feature, validFeature(feature))
+     61|       )) &&
+     62|       (!('footer' in request.resource.data) || (
+     63|         request.resource.data.footer is map &&
+     64|         request.resource.data.footer.keys().hasOnly(['about', 'copyright']) &&
+     65|         validLocalized(request.resource.data.footer.about) &&
+     66|         validLocalized(request.resource.data.footer.copyright)
+     67|       ));
+     68|     }
+     69| 
+     70|     function validClinicPublicConfig() {
+     71|       return validLocalizedIfPresent(request.resource.data, 'name') &&
+     72|         validLocalizedIfPresent(request.resource.data, 'description') &&
+     73|         (!('logoUrl' in request.resource.data) || validHttpsUrl(request.resource.data.logoUrl)) &&
+     74|         (!('contact' in request.resource.data) || (
+     75|           request.resource.data.contact is map &&
+     76|           request.resource.data.contact.keys().hasOnly(['address', 'phone', 'email']) &&
+     77|           validLocalized(request.resource.data.contact.address) &&
+     78|           request.resource.data.contact.phone is string &&
+     79|           request.resource.data.contact.email is string &&
+     80|           (request.resource.data.contact.email == '' || request.resource.data.contact.email.matches('^[^ @]+@[^ @]+[.][^ @]+$'))
+     81|         )) &&
+     82|         (!('openingHours' in request.resource.data) || (
+     83|           request.resource.data.openingHours is map &&
+     84|           request.resource.data.openingHours.keys().hasOnly(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']) &&
+     85|           (!('monday' in request.resource.data.openingHours) || request.resource.data.openingHours.monday is string) &&
+     86|           (!('tuesday' in request.resource.data.openingHours) || request.resource.data.openingHours.tuesday is string) &&
+     87|           (!('wednesday' in request.resource.data.openingHours) || request.resource.data.openingHours.wednesday is string) &&
+     88|           (!('thursday' in request.resource.data.openingHours) || request.resource.data.openingHours.thursday is string) &&
+     89|           (!('friday' in request.resource.data.openingHours) || request.resource.data.openingHours.friday is string) &&
+     90|           (!('saturday' in request.resource.data.openingHours) || request.resource.data.openingHours.saturday is string) &&
+     91|           (!('sunday' in request.resource.data.openingHours) || request.resource.data.openingHours.sunday is string)
+     92|         )) &&
+     93|         validLocalizedIfPresent(request.resource.data, 'emergencyInformation') &&
+     94|         validBranding() &&
+     95|         validManagedContent() &&
+     96|         (!('socialLinks' in request.resource.data) || (
+     97|           request.resource.data.socialLinks is map &&
+     98|           request.resource.data.socialLinks.keys().hasOnly(['facebook', 'instagram', 'tiktok', 'youtube', 'whatsapp', 'website']) &&
+     99|           validHttpsUrl(request.resource.data.socialLinks.facebook) &&
+    100|           validHttpsUrl(request.resource.data.socialLinks.instagram) &&
+    101|           validHttpsUrl(request.resource.data.socialLinks.tiktok) &&
+    102|           validHttpsUrl(request.resource.data.socialLinks.youtube) &&
+    103|           validHttpsUrl(request.resource.data.socialLinks.whatsapp) &&
+    104|           validHttpsUrl(request.resource.data.socialLinks.website)
+    105|         ));
+    106|     }
+    107| 
+    108|     function clinicUpdateFieldsAreAllowed() {
+    109|       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'logoUrl', 'branding', 'contact', 'openingHours', 'emergencyInformation', 'hero', 'about', 'footer', 'socialLinks']);
+    110|     }
+    111| 
+    112|     function serviceFieldsAreAllowed() {
+    113|       return request.resource.data.keys().hasOnly(['name', 'description', 'icon', 'price', 'currency', 'order', 'active']);
+    114|     }
+    115| 
+    116|     function validService() {
+    117|       return validLocalized(request.resource.data.name) &&
+    118|         validLocalized(request.resource.data.description) &&
+    119|         request.resource.data.icon is string &&
+    120|         request.resource.data.price is number && request.resource.data.price >= 0 &&
+    121|         request.resource.data.currency is string && request.resource.data.currency.matches('^[A-Z]{3}$') &&
+    122|         request.resource.data.order is number &&
+    123|         request.resource.data.active is bool;
+    124|     }
+    125| 
+    126|     function faqFieldsAreAllowed() {
+    127|       return request.resource.data.keys().hasOnly(['question', 'answer', 'order', 'active']);
+    128|     }
+    129| 
+    130|     function validFaq() {
+    131|       return validLocalized(request.resource.data.question) &&
+    132|         validLocalized(request.resource.data.answer) &&
+    133|         request.resource.data.order is number &&
+    134|         request.resource.data.active is bool;
+    135|     }
+    136| 
+    137|     match /clinics/{clinicId} {
+    138|       allow read: if (resource.data.public == true && resource.data.active == true) || memberOf(clinicId);
+    139|       allow create: if false;
+    140|       allow update: if memberOf(clinicId) && ownerOrAdmin() && clinicUpdateFieldsAreAllowed() &&
+    141|         request.resource.data.keys().hasOnly(['slug', 'public', 'active', 'name', 'description', 'logoUrl', 'branding', 'contact', 'openingHours', 'emergencyInformation', 'hero', 'about', 'footer', 'socialLinks']) &&
+    142|         validClinicPublicConfig();
+    143|       allow delete: if false;
+    144| 
+    145|       match /services/{serviceId} {
+    146|         allow read: if (resource.data.active == true &&
+    147|           get(/databases/$(database)/documents/clinics/$(clinicId)).data.public == true &&
+    148|           get(/databases/$(database)/documents/clinics/$(clinicId)).data.active == true) || memberOf(clinicId);
+    149|         allow create: if memberOf(clinicId) && ownerOrAdmin() && serviceFieldsAreAllowed() && validService();
+    150|         allow update: if memberOf(clinicId) && ownerOrAdmin() && serviceFieldsAreAllowed() && validService();
+    151|         allow delete: if false;
+    152|       }
+    153| 
+    154|       match /faqs/{faqId} {
+    155|         allow read: if (resource.data.active == true &&
+    156|           get(/databases/$(database)/documents/clinics/$(clinicId)).data.public == true &&
+    157|           get(/databases/$(database)/documents/clinics/$(clinicId)).data.active == true) || memberOf(clinicId);
+    158|         allow create: if memberOf(clinicId) && ownerOrAdmin() && faqFieldsAreAllowed() && validFaq();
+    159|         allow update: if memberOf(clinicId) && ownerOrAdmin() && faqFieldsAreAllowed() && validFaq();
+    160|         allow delete: if memberOf(clinicId) && ownerOrAdmin();
+    161|       }
+    162| 
+    163|       match /appointments/{appointmentId} {
+    164|         allow read: if memberOf(clinicId);
+    165|         allow create: if false;
+    166|         allow update, delete: if false;
+    167|       }
+    168| 
+    169|       match /analyticsEvents/{eventId} {
+    170|         allow read: if memberOf(clinicId) && ownerOrAdmin();
+    171|         allow create, update, delete: if false;
+    172|       }
+    173| 
+    174|       match /analyticsAggregates/{aggregateId} {
+    175|         allow read: if memberOf(clinicId) && ownerOrAdmin();
+    176|         allow create, update, delete: if false;
+    177|       }
+    178|     }
+    179| 
+    180|     match /users/{uid} {
+    181|       allow read: if signedIn() && request.auth.uid == uid;
+    182|       allow create, delete: if false;
+    183|       allow update: if false;
+    184|     }
+    185| 
+    186|     match /{document=**} {
+    187|       allow read, write: if false;
+    188|     }
+    189|   }
+    190| }
+    191| 
+  DEPLOYED clinics documents: 2
+    clinic id=mt1-clinic-alpha slug="mt1-clinic-alpha" public=true active=true
+      services: count=1
+      faqs: count=0
+      appointments: count=5
+      analyticsEvents: count=0
+      analyticsAggregates: count=1
+    clinic id=mt1-clinic-beta slug="mt1-clinic-beta" public=false active=true
+      services: count=0
+      faqs: count=0
+      appointments: count=0
+      analyticsEvents: count=0
+      analyticsAggregates: count=0
+  DEPLOYED membership docs (users/*): 2
+    role histogram:   owner=2
+    status histogram: active=2
+    docs with clinicId: 2
+    docs with email field: 0 (values NOT printed)
