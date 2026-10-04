@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createClinicFaq, deleteClinicFaq, listClinicFaqs, updateClinicContent, updateClinicFaq } from '../lib/clinicConfig'
 
@@ -32,17 +32,36 @@ export default function ClinicContentAdmin({ clinicId, clinic }) {
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState('')
 
+  const fetchFaqs = useCallback(() => listClinicFaqs(clinicId), [clinicId])
+
+  // Event-handler loader (post-mutation refresh).
   const loadFaqs = async () => {
     try {
       setStatus('loading')
-      setFaqs(await listClinicFaqs(clinicId))
+      setFaqs(await fetchFaqs())
       setStatus('ready')
     } catch {
       setStatus('error')
     }
   }
 
-  useEffect(() => { loadFaqs() }, [clinicId])
+  useEffect(() => {
+    let active = true
+
+    fetchFaqs()
+      .then((next) => {
+        if (!active) return
+        setFaqs(next)
+        setStatus('ready')
+      })
+      .catch(() => {
+        if (active) setStatus('error')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [fetchFaqs])
 
   const saveContent = async (event) => {
     event.preventDefault()

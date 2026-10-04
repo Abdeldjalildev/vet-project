@@ -149,8 +149,14 @@ assert.match(publicClinic, /<VetTips \/>/)
 assert.match(publicClinic, /<BookingForm[^>]+clinic=/)
 assert.match(publicClinic, /<Footer clinic=/)
 
-assert.match(netlifyFunctions.provisionClinic, /Date\.parse\(ownerUser\.passwordUpdatedAt \|\| ''\)/)
-assert.match(netlifyFunctions.completeClinicPasswordSetup, /Date\.parse\(userRecord\.passwordUpdatedAt \|\| ''\)/)
+assert.match(netlifyFunctions.provisionClinic, /passwordSetupHashDigest/)
+assert.match(netlifyFunctions.provisionClinic, /createHash\('sha256'\)/)
+assert.match(netlifyFunctions.completeClinicPasswordSetup, /passwordSetupHashDigest/)
+assert.match(netlifyFunctions.completeClinicPasswordSetup, /createHash\('sha256'\)/)
+assert.ok(!netlifyFunctions.completeClinicPasswordSetup.includes('userRecord.passwordUpdatedAt'),
+  'completion must no longer depend on passwordUpdatedAt')
+assert.ok(!netlifyFunctions.provisionClinic.includes('ownerUser.passwordUpdatedAt'),
+  'provisioning must no longer depend on passwordUpdatedAt')
 assert.match(netlifyFunctions.provisionClinic, /temporaryPassword/)
 assert.match(netlifyFunctions.provisionClinic, /mustChangePassword: true/)
 assert.match(netlifyFunctions.completeClinicPasswordSetup, /mustChangePassword !== true/)

@@ -17,6 +17,7 @@ import { createRequire } from 'node:module'
 import { execSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { createHash } from 'node:crypto'
 import os from 'node:os'
 import path from 'node:path'
 
@@ -193,12 +194,15 @@ await seedMembership(ADMIN_A, { clinicId: CLINIC_A, role: 'admin', status: 'acti
 await seedMembership(SUSPENDED_A, { clinicId: CLINIC_A, role: 'owner', status: 'suspended' })
 await seedMembership(STAFF_A, { clinicId: CLINIC_A, role: 'staff', status: 'active' })
 await seedMembership(OWNER_B, { clinicId: CLINIC_B, role: 'owner', status: 'active' })
-await seedMembership(PWD_PENDING, { clinicId: CLINIC_A, role: 'owner', status: 'active', mustChangePassword: true, passwordSetupIssuedAt: -1 })
-await seedMembership(PWD_FUTURE, { clinicId: CLINIC_A, role: 'owner', status: 'active', mustChangePassword: true, passwordSetupIssuedAt: Date.now() + 3600000 })
+const seedDigest = (value) => createHash('sha256').update(String(value), 'utf8').digest('hex')
+// P08: digests of unrelated sentinels (deliberately NOT the live Auth passwordHash) so the
+// seeded memberships start in the "credential rotated" state, except where overwritten below.
+await seedMembership(PWD_PENDING, { clinicId: CLINIC_A, role: 'owner', status: 'active', mustChangePassword: true, passwordSetupIssuedAt: Date.now(), passwordSetupHashDigest: seedDigest('gcc-user-pwd-pending:unrelated') })
+await seedMembership(PWD_FUTURE, { clinicId: CLINIC_A, role: 'owner', status: 'active', mustChangePassword: true, passwordSetupIssuedAt: Date.now() + 3600000, passwordSetupHashDigest: seedDigest('gcc-user-pwd-future:unrelated') })
 await seedMembership(PWD_NOSETUP, { clinicId: CLINIC_A, role: 'owner', status: 'active', mustChangePassword: true })
 await seedMembership(PWD_DONE, { clinicId: CLINIC_A, role: 'admin', status: 'active', mustChangePassword: false })
-await seedMembership(PWD_TARGET, { clinicId: CLINIC_A, role: 'owner', status: 'active', mustChangePassword: true, passwordSetupIssuedAt: -1 })
-await seedMembership(VANISHING, { clinicId: CLINIC_A, role: 'owner', status: 'active', mustChangePassword: true, passwordSetupIssuedAt: -1 })
+await seedMembership(PWD_TARGET, { clinicId: CLINIC_A, role: 'owner', status: 'active', mustChangePassword: true, passwordSetupIssuedAt: Date.now(), passwordSetupHashDigest: seedDigest('gcc-user-pwd-target:unrelated') })
+await seedMembership(VANISHING, { clinicId: CLINIC_A, role: 'owner', status: 'active', mustChangePassword: true, passwordSetupIssuedAt: Date.now(), passwordSetupHashDigest: seedDigest('gcc-user-vanishing:unrelated') })
 // No membership document for OUTSIDER: authorization must reject it.
 
 await seedAppointment(CLINIC_A, 'gcc-appt-pending', { clinicId: CLINIC_A, status: 'pending', estimatedServiceValue: 2500, serviceCurrency: 'DZD', date: todayKey, time: '09:00' })
@@ -497,16 +501,30 @@ console.log('\n--- TEST GROUP 6: completeClinicPasswordSetup HTTP boundary, auth
 
 console.log('\n--- TEST GROUP 7: completeClinicPasswordSetup state semantics & spoof resistance ---')
 {
-  // 1. Body-supplied identity/state must not retarget another user or satisfy the precondition.
+  // 1. Body-supplied identity/state must not retarget another user: the caller operates
+  // on its OWN membership only (body uid/clinicId/flags are ignored). Caller PWD_FUTURE's
+  // stored digest is the digest of its LIVE hash (written below before the spoof call), so
+  // the spoof attempt is 412 for the caller itself while the target stays untouched.
+  // P08 fail-closed setup: overwrite PWD_FUTURE's digest with the digest of its LIVE
+  // Auth passwordHash, so liveDigest === storedDigest. Models "temporary still active".
+  {
+    const liveHash = (await authAdmin.getUser(PWD_FUTURE)).passwordHash
+    assert.ok(typeof liveHash === 'string' && liveHash.length > 0, 'Auth emulator must expose the live passwordHash')
+    await db.collection('users').doc(PWD_FUTURE).update({
+      passwordSetupHashDigest: createHash('sha256').update(liveHash, 'utf8').digest('hex'),
+    })
+  }
   const targetBefore = await db.collection('users').doc(PWD_TARGET).get()
+  const futureCallerBefore = await db.collection('users').doc(PWD_FUTURE).get()
   const spoof = await postPassword({
     uid: PWD_TARGET,
     userId: PWD_TARGET,
     clinicId: CLINIC_B,
     mustChangePassword: false,
-    passwordUpdatedAt: '2999-01-01T00:00:00.000Z',
+    passwordChanged: true,
+    passwordSetupHashDigest: '0'.repeat(64),
     setupIssuedAt: 0,
-    passwordSetupIssuedAt: -1,
+    passwordSetupIssuedAt: 0,
   }, PWD_FUTURE_TOKEN)
   assert.equal(spoof.statusCode, 412, spoof.body)
   assert.equal(json(spoof).error.code, 'failed-precondition')
@@ -514,8 +532,12 @@ console.log('\n--- TEST GROUP 7: completeClinicPasswordSetup state semantics & s
   const targetAfter = await db.collection('users').doc(PWD_TARGET).get()
   assert.equal(targetAfter.data().mustChangePassword, true, 'another user must never be modified')
   assert.deepEqual(targetAfter.data(), targetBefore.data(), 'the spoofed target document must be untouched')
+  const futureCallerAfter = await db.collection('users').doc(PWD_FUTURE).get()
+  assert.deepEqual(futureCallerAfter.data(), futureCallerBefore.data(),
+    'a rejected spoof must not write anything to the caller either')
 
-  // 2. Precondition failures (setupIssuedAt in the future / not issued at all)
+  // 2. Precondition failures: unchanged temporary credential (PWD_FUTURE digest already
+  // equals its live hash, set above), and legacy docs without a digest.
   const future = await postPassword({}, PWD_FUTURE_TOKEN)
   assert.equal(future.statusCode, 412)
   assert.equal(json(future).error.code, 'failed-precondition')
@@ -537,16 +559,20 @@ console.log('\n--- TEST GROUP 7: completeClinicPasswordSetup state semantics & s
   const doneAfter = await db.collection('users').doc(PWD_DONE).get()
   assert.deepEqual(doneAfter.data(), doneBefore.data(), 'the short-circuit path must not write')
 
-  // 4. Genuine completion flips mustChangePassword and writes updatedAt only
+  // 4. Genuine completion: a REAL Auth password change flips mustChangePassword.
+  // P08: seeded digests are digests of unrelated sentinel strings, so the live Auth
+  // passwordHash (from seedIdentity) differs -> inequality proves credential rotation.
   const valid = await postPassword({}, PWD_PENDING_TOKEN)
   assert.equal(valid.statusCode, 200, valid.body)
   assert.deepEqual(json(valid), { completed: true })
   const pendingDoc = await db.collection('users').doc(PWD_PENDING).get()
   assert.equal(pendingDoc.data().mustChangePassword, false)
   assert.ok(pendingDoc.data().updatedAt, 'updatedAt must be written on completion')
+  assert.ok(pendingDoc.data().passwordSetupCompletedAt, 'passwordSetupCompletedAt must be written on completion')
   assert.equal(pendingDoc.data().clinicId, CLINIC_A, 'unrelated membership fields must be preserved')
   assert.equal(pendingDoc.data().role, 'owner')
-  assert.equal(pendingDoc.data().passwordSetupIssuedAt, -1, 'the issued timestamp must be preserved')
+  assert.equal(pendingDoc.data().passwordSetupHashDigest, seedDigest('gcc-user-pwd-pending:unrelated'),
+    'the stored digest must be preserved, not rotated, on completion')
 
   // 5. Repeating the call after completion is idempotent
   const second = await postPassword({}, PWD_PENDING_TOKEN)
@@ -796,11 +822,14 @@ console.log('\n--- TEST GROUP 11: preserved operation contract (source parity) -
   assert.match(transitionSource, /requireClinicMembership\(decodedToken\)/)
 
   const passwordSource = read('netlify/functions/completeClinicPasswordSetup.js')
-  assert.match(passwordSource, /Date\.parse\(userRecord\.passwordUpdatedAt \|\| ''\) \|\| 0/)
-  assert.match(passwordSource, /Number\(membership\.passwordSetupIssuedAt\) \|\| 0/)
-  assert.match(passwordSource, /!setupIssuedAt \|\| passwordUpdatedAt <= setupIssuedAt/)
+  assert.match(passwordSource, /passwordSetupHashDigest/)
+  assert.match(passwordSource, /createHash\('sha256'\)/)
+  assert.match(passwordSource, /liveDigest === storedDigest/)
+  assert.ok(!passwordSource.includes('userRecord.passwordUpdatedAt'),
+    'completion must no longer depend on passwordUpdatedAt')
   assert.match(passwordSource, /mustChangePassword !== true/)
   assert.match(passwordSource, /mustChangePassword: false/)
+  assert.match(passwordSource, /passwordSetupCompletedAt/)
   assert.match(passwordSource, /decodedToken\.uid/)
 
   const analyticsSource = read('netlify/functions/recordAnalyticsEvent.js')
@@ -823,14 +852,11 @@ console.log('\n--- TEST GROUP 11: preserved operation contract (source parity) -
     )
   }
 
-  // Environment limitation (documented, not worked around by changing production behavior):
-  // firebase-admin 13.10.0's UserRecord maps uid/email/emailVerified/displayName/photoURL/
-  // phoneNumber/disabled/metadata/providerData/passwordHash/passwordSalt/tokensValidAfterTime/
-  // customClaims/tenantId/multiFactor and never exposes `passwordUpdatedAt`, so the preserved
-  // callable expression `Date.parse(userRecord.passwordUpdatedAt || '') || 0` evaluates to 0 both
-  // here and in production on the same SDK line. The success branch is therefore driven with a
-  // `passwordSetupIssuedAt` below that value (a truthy negative bound), which executes the real
-  // comparison, the real Auth lookup and the real Firestore update without mocking anything.
+  // P08 repaired: firebase-admin 13.10.0's UserRecord maps uid/email/emailVerified/
+  // displayName/photoURL/phoneNumber/disabled/metadata/providerData/passwordHash/
+  // passwordSalt/tokensValidAfterTime/customClaims/tenantId/multiFactor and never exposes
+  // `passwordUpdatedAt`, so the completion guard compares the SHA-256 digest of the live
+  // Auth passwordHash against the digest stamped at provisioning (see Groups 6-7).
 
   console.log('✓ Source parity with the preserved operation contract: PASS')
 }

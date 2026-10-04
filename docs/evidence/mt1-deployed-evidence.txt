@@ -1,0 +1,75 @@
+  releases: cloud.firestore|ruleset=1e06eae4-9767-4b16-9077-b18ab450d875|updateTime=2026-09-23T16:10:02.792121Z
+  deployed ruleset=1e06eae4-9767-4b16-9077-b18ab450d875 updateTime=2026-09-23T16:10:02.792121Z lines=9 sha256=ecf30f940747dcc3
+  local    rules lines=191 sha256=263a3cae0b574673
+  DEPLOYED RULES == LOCAL firestore.rules: false
+    diff @L5: deployed="match /{document=**} {" | local="function signedIn() { return request.auth != null; }"
+    diff @L6: deployed="allow read, write: if false;" | local="function membershipExists() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }"
+    diff @L7: deployed="}" | local="function membership() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }"
+    diff @L8: deployed="}" | local="function activeMember() { return membershipExists() && membership().status == 'active'; }"
+    diff @L9: deployed="}" | local="function memberOf(clinicId) { return activeMember() && (membership().role == 'owner' || membership().role == 'admin') && membership().clinicId == clinicId; }"
+  local firestore.indexes.json declares 2 composite index(es)
+  DEPLOYED composite indexes: 0
+  deployed rules source verbatim (163B):
+      1| rules_version = '2';
+      2| 
+      3| service cloud.firestore {
+      4|   match /databases/{database}/documents {
+      5|     match /{document=**} {
+      6|       allow read, write: if false;
+      7|     }
+      8|   }
+      9| }
+  DEPLOYED clinics documents: 0
+  DEPLOYED membership docs (users/*): 0
+    role histogram:   (none)
+    status histogram: (none)
+    docs with clinicId: 0
+    docs with email field: 0 (values NOT printed)
+
+--- API-READ PROBE 2026-10-01T10:08:04.341Z ---
+  bundle: HTTP 200, 1093658B
+    AIza-prefixed web API key: false
+    projectId literal "vet-life": false
+    authDomain firebaseapp.com: false
+    placeholder text VITE_FIREBASE: false
+    auth/unauthorized-domain handling: true
+    app UI marker (dashboard route): true
+    app UI marker (clinic route): true
+    apiKey-adjacent literals (first 2, may be SDK code): apiKey}).slice(1) | apiKey:i}=e.config
+
+--- API-READ PROBE 2026-10-01T10:08:04.341Z ---
+  bundle: HTTP 200, 1093658B
+    AIza-prefixed web API key: false
+    projectId literal "vet-life": false
+    authDomain firebaseapp.com: false
+    placeholder text VITE_FIREBASE: false
+    auth/unauthorized-domain handling: true
+    app UI marker (dashboard route): true
+    app UI marker (clinic route): true
+    apiKey-adjacent literals (first 2, may be SDK code): apiKey}).slice(1) | apiKey:i}=e.config
+--- C2. CLI API CLIENT --- exports(request-ish): clientId, clientSecret, githubClientId, githubClientSecret
+  usable request(): false
+
+--- API-READ PROBE 2026-10-01T10:23:01.524Z ---
+  bundle: HTTP 200, 1093658B
+    AIza-prefixed web API key: false
+    projectId literal "vet-life": false
+    authDomain firebaseapp.com: false
+    placeholder text VITE_FIREBASE: false
+    auth/unauthorized-domain handling: true
+    app UI marker (dashboard route): true
+    app UI marker (clinic route): true
+    apiKey-adjacent literals (first 2, may be SDK code): apiKey}).slice(1) | apiKey:i}=e.config
+
+--- API-READ PROBE 2026-10-01T10:23:01.524Z ---
+  bundle: HTTP 200, 1093658B
+    AIza-prefixed web API key: false
+    projectId literal "vet-life": false
+    authDomain firebaseapp.com: false
+    placeholder text VITE_FIREBASE: false
+    auth/unauthorized-domain handling: true
+    app UI marker (dashboard route): true
+    app UI marker (clinic route): true
+    apiKey-adjacent literals (first 2, may be SDK code): apiKey}).slice(1) | apiKey:i}=e.config
+--- C2. CLI API CLIENT --- exports(request-ish): clientId, clientSecret, githubClientId, githubClientSecret
+  usable request(): false

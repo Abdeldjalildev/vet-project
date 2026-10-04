@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   createClinicService,
@@ -27,11 +27,13 @@ export default function ClinicServicesAdmin({ clinicId }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const fetchServices = useCallback(() => listClinicServices(clinicId), [clinicId])
+
+  // Event-handler loader (retry button and post-mutation refresh).
   const load = async () => {
     try {
       setStatus('loading')
-      const next = await listClinicServices(clinicId)
-      setServices(next)
+      setServices(await fetchServices())
       setStatus('ready')
     } catch {
       setStatus('error')
@@ -39,8 +41,22 @@ export default function ClinicServicesAdmin({ clinicId }) {
   }
 
   useEffect(() => {
-    load()
-  }, [clinicId])
+    let active = true
+
+    fetchServices()
+      .then((next) => {
+        if (!active) return
+        setServices(next)
+        setStatus('ready')
+      })
+      .catch(() => {
+        if (active) setStatus('error')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [fetchServices])
 
   const reset = () => {
     setForm(EMPTY)

@@ -23,17 +23,62 @@ jobs:
           cache: npm
       - name: Install web dependencies
         run: npm ci
+      - name: Lint
+        run: npm run lint
       - name: Contract smoke tests
         run: npm run test:contract
       - name: Release readiness checks
         run: npm run test:release-readiness
+      - name: Phase 16 Netlify cutover contract (no credentials)
+        run: npm run test:phase16:cutover
+      - name: Phase 16A shared Netlify infrastructure (no credentials)
+        run: npm run test:phase16:a
       - name: Validate Cloud Functions syntax
         run: node --check functions/index.js
       - name: Build web application
         run: npm run build
       - name: Install Functions dependencies
         working-directory: functions
-        run: npm install --ignore-scripts --no-package-lock
+        run: npm ci --ignore-scripts
       - name: Validate Functions dependency tree
         working-directory: functions
         run: npm ls --depth=0
+
+  # Emulator-backed suites. Every suite re-launches itself with `firebase emulators:exec`
+  # against a `demo-` project, so this job needs no Firebase/Vercel credentials and can
+  # never reach a production project. The Firestore Emulator requires a JVM.
+  emulators:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+      - name: Setup Java (required by the Firestore Emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Firebase Emulator Suite CLI
+        run: npm install --global firebase-tools@15.30.2
+      - name: Password setup ordering (Firestore + Auth Emulators)
+        run: npm run test:password-setup-ordering
+      - name: MT-1 Firestore Rules matrix (Firestore + Auth Emulators)
+        run: npm run test:mt1:rules
+      - name: Phase 16B endpoint groups A-D (Firestore/Auth Emulators)
+        run: npm run test:phase16:b
+      - name: Netlify Firebase Admin runtime (Firestore Emulator)
+        run: npm run test:netlify:runtime
+      - name: Upload emulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-evidence
+          path: docs/evidence/*.txt
+          if-no-files-found: warn

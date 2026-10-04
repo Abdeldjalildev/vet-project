@@ -3,6 +3,7 @@
 // Migrated from Firebase Callable: functions/index.js exports.provisionClinic
 
 const { getAuthAdmin, getFirestoreAdmin } = require('./lib/firebaseAdmin')
+const crypto = require('node:crypto')
 const {
   handleCorsPreflight,
   requirePostMethod,
@@ -94,7 +95,22 @@ exports.handler = async (event) => {
     if (!existingSlug.empty) fail('already-exists', 'That clinic slug is already in use.')
 
     const ownerUser = await createOwnerUser(authAdmin, ownerEmail, temporaryPassword)
-    const passwordSetupIssuedAt = Date.parse(ownerUser.passwordUpdatedAt || '') || Date.now()
+    // P08: stamp a server-side verifier for the temporary credential. The Admin SDK
+    // exposes passwordHash (firebase-admin@13.10.0, Auth emulator PROBE PASS), so the
+    // fresh record is read immediately after creation and ONLY its SHA-256 digest is
+    // persisted. Plaintext and raw hashes are never stored or logged.
+    const freshOwnerUser = await authAdmin.getUser(ownerUser.uid)
+    const initialPasswordHash = freshOwnerUser.passwordHash
+    if (typeof initialPasswordHash !== 'string' || initialPasswordHash.length === 0) {
+      try {
+        await authAdmin.deleteUser(ownerUser.uid)
+      } catch (cleanupError) {
+        console.error('Provisioning cleanup failed:', { uid: ownerUser.uid, error: cleanupError?.message })
+      }
+      fail('internal', 'Password setup could not be initialized.')
+    }
+    const passwordSetupHashDigest = crypto.createHash('sha256').update(initialPasswordHash, 'utf8').digest('hex')
+    const passwordSetupIssuedAt = Date.now()
     const clinicRef = clinics.doc()
     const now = FieldValue.serverTimestamp()
 
@@ -120,6 +136,7 @@ exports.handler = async (event) => {
           status: 'active',
           mustChangePassword: true,
           passwordSetupIssuedAt,
+          passwordSetupHashDigest,
           createdAt: now,
           updatedAt: now,
         })

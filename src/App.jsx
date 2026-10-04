@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from './auth/AuthProvider'
+import { useAuth } from './auth/useAuth'
 import ClinicLogin from './components/ClinicLogin'
 import ClinicAdminLayout from './components/ClinicAdminLayout'
 import ClinicAppointmentsAdmin from './components/ClinicAppointmentsAdmin'
@@ -22,21 +22,34 @@ function ClinicRoute() {
   const path = window.location.pathname
   const [membershipState, setMembershipState] = useState('loading')
 
+  // `/clinic/login` and `/clinic/first-password` render without a membership
+  // lookup, so the requirement is derived from the render inputs instead of being
+  // written into state from inside the effect (which would update state
+  // synchronously while the effect runs).
+  const membershipRequired = Boolean(user) && path !== '/clinic/login' && path !== '/clinic/first-password'
+
   useEffect(() => {
-    if (!user || path === '/clinic/login' || path === '/clinic/first-password') {
-      setMembershipState('ready')
-      return
-    }
+    if (!membershipRequired) return undefined
+
+    let active = true
+
     getClinicMembership(user.uid)
       .then((membership) => {
+        if (!active) return
         if (membership?.mustChangePassword === true) {
           window.location.replace('/clinic/first-password')
           return
         }
         setMembershipState('ready')
       })
-      .catch(() => setMembershipState('error'))
-  }, [user, path])
+      .catch(() => {
+        if (active) setMembershipState('error')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [membershipRequired, user])
 
   if (authLoading) return <RouteState message={t('checkingClinicSession')} />
 
@@ -45,8 +58,8 @@ function ClinicRoute() {
   }
 
   if (!user) return <Redirect path="/" />
-  if (membershipState === 'loading') return <RouteState message={t('checkingClinicSession')} />
   if (membershipState === 'error') return <RouteState message={t('adminAccessError')} />
+  if (membershipRequired && membershipState !== 'ready') return <RouteState message={t('checkingClinicSession')} />
 
   if (path === '/clinic/first-password') return <ClinicFirstPassword />
 
@@ -83,18 +96,30 @@ function PlatformRoute() {
   const [authorized, setAuthorized] = useState(false)
 
   useEffect(() => {
-    if (!user) {
-      setState('ready')
-      setAuthorized(false)
-      return
-    }
+    if (!user) return undefined
+
+    let active = true
+
     getPlatformOwnerClaim(user, true)
-      .then((claim) => { setAuthorized(claim); setState('ready') })
-      .catch(() => { setAuthorized(false); setState('ready') })
+      .then((claim) => {
+        if (!active) return
+        setAuthorized(claim)
+        setState('ready')
+      })
+      .catch(() => {
+        if (!active) return
+        setAuthorized(false)
+        setState('ready')
+      })
+
+    return () => {
+      active = false
+    }
   }, [user])
 
-  if (authLoading || state === 'loading') return <RouteState message={t('checkingPlatformSession')} />
+  if (authLoading) return <RouteState message={t('checkingPlatformSession')} />
   if (!user) return <Redirect path="/" />
+  if (state !== 'ready') return <RouteState message={t('checkingPlatformSession')} />
   if (!authorized) return <RouteState message={t('platformAccessDenied')} />
   return <PlatformOwnerDashboard />
 }

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/useAuth'
 import { getPlatformOwnerClaim } from '../lib/auth'
 import { listProvisionedClinics, provisionClinic } from '../lib/platform'
 
@@ -18,17 +18,20 @@ export default function PlatformOwnerDashboard() {
   const [error, setError] = useState('')
   const [form, setForm] = useState(INITIAL_FORM)
 
+  const fetchPlatformData = useCallback(async () => {
+    const claim = await getPlatformOwnerClaim(user, true)
+    if (!claim) return { authorized: false, clinics: [] }
+    return { authorized: true, clinics: await listProvisionedClinics() }
+  }, [user])
+
+  // Event-handler loader (retry button).
   const load = async () => {
     setStatus('loading')
     setError('')
     try {
-      const claim = await getPlatformOwnerClaim(user, true)
-      setAuthorized(claim)
-      if (!claim) {
-        setStatus('ready')
-        return
-      }
-      setClinics(await listProvisionedClinics())
+      const { authorized: claimAuthorized, clinics: nextClinics } = await fetchPlatformData()
+      setAuthorized(claimAuthorized)
+      if (claimAuthorized) setClinics(nextClinics)
       setStatus('ready')
     } catch (loadError) {
       setAuthorized(false)
@@ -37,7 +40,27 @@ export default function PlatformOwnerDashboard() {
     }
   }
 
-  useEffect(() => { load() }, [user.uid])
+  useEffect(() => {
+    let active = true
+
+    fetchPlatformData()
+      .then(({ authorized: claimAuthorized, clinics: nextClinics }) => {
+        if (!active) return
+        setAuthorized(claimAuthorized)
+        if (claimAuthorized) setClinics(nextClinics)
+        setStatus('ready')
+      })
+      .catch((loadError) => {
+        if (!active) return
+        setAuthorized(false)
+        setError(loadError.message || 'PLATFORM_LOAD_FAILED')
+        setStatus('error')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [fetchPlatformData])
 
   const submit = async (event) => {
     event.preventDefault()

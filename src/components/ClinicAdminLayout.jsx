@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getDoc } from 'firebase/firestore'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/useAuth'
 import { clinicRef, userRef } from '../lib/firestore'
 import { localized } from '../lib/clinicData'
 
@@ -23,37 +23,64 @@ export default function ClinicAdminLayout({ section, children }) {
   const [status, setStatus] = useState('loading')
   const [loadError, setLoadError] = useState('')
 
+  const fetchAdminData = useCallback(async () => {
+    const membershipSnapshot = await getDoc(userRef(user.uid))
+    if (!membershipSnapshot.exists()) throw new Error('CLINIC_MEMBERSHIP_NOT_FOUND')
+
+    const nextMembership = membershipSnapshot.data()
+    if (
+      nextMembership.status !== 'active' ||
+      !['owner', 'admin'].includes(nextMembership.role) ||
+      !nextMembership.clinicId
+    ) {
+      throw new Error('CLINIC_MEMBERSHIP_INVALID')
+    }
+
+    const clinicSnapshot = await getDoc(clinicRef(nextMembership.clinicId))
+    if (!clinicSnapshot.exists()) throw new Error('CLINIC_NOT_FOUND')
+
+    return {
+      membership: nextMembership,
+      clinic: { clinicId: clinicSnapshot.id, ...clinicSnapshot.data() },
+    }
+  }, [user.uid])
+
+  // Event-handler loader (retry button): it may raise the loading status because
+  // it always runs from a user interaction, never synchronously inside an effect.
   const load = useCallback(async () => {
+    setStatus('loading')
+    setLoadError('')
     try {
-      setStatus('loading')
-      setLoadError('')
-      const membershipSnapshot = await getDoc(userRef(user.uid))
-      if (!membershipSnapshot.exists()) throw new Error('CLINIC_MEMBERSHIP_NOT_FOUND')
-
-      const nextMembership = membershipSnapshot.data()
-      if (
-        nextMembership.status !== 'active' ||
-        !['owner', 'admin'].includes(nextMembership.role) ||
-        !nextMembership.clinicId
-      ) {
-        throw new Error('CLINIC_MEMBERSHIP_INVALID')
-      }
-
-      const clinicSnapshot = await getDoc(clinicRef(nextMembership.clinicId))
-      if (!clinicSnapshot.exists()) throw new Error('CLINIC_NOT_FOUND')
-
+      const { membership: nextMembership, clinic: nextClinic } = await fetchAdminData()
       setMembership(nextMembership)
-      setClinic({ clinicId: clinicSnapshot.id, ...clinicSnapshot.data() })
+      setClinic(nextClinic)
       setStatus('ready')
     } catch (error) {
       setLoadError(error.message || 'ADMIN_LOAD_FAILED')
       setStatus('error')
     }
-  }, [user.uid])
+  }, [fetchAdminData])
 
   useEffect(() => {
-    load()
-  }, [load])
+    let active = true
+
+    fetchAdminData()
+      .then(({ membership: nextMembership, clinic: nextClinic }) => {
+        if (!active) return
+        setMembership(nextMembership)
+        setClinic(nextClinic)
+        setStatus('ready')
+      })
+      .catch((error) => {
+        if (!active) return
+        setLoadError(error.message || 'ADMIN_LOAD_FAILED')
+        setStatus('error')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [fetchAdminData])
 
   const handleSignOut = async () => {
     await signOut()

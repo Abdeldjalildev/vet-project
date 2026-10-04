@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { listClinicAppointments, transitionAppointment } from '../lib/appointments'
 
@@ -16,10 +16,13 @@ export default function ClinicAppointmentsAdmin({ clinicId }) {
   const [actionId, setActionId] = useState(null)
   const [actionError, setActionError] = useState('')
 
+  const fetchAppointments = useCallback(() => listClinicAppointments(clinicId), [clinicId])
+
+  // Event-handler loader (retry button and post-mutation refresh).
   const load = async () => {
     try {
       setStatus('loading')
-      setAppointments(await listClinicAppointments(clinicId))
+      setAppointments(await fetchAppointments())
       setStatus('ready')
     } catch {
       setStatus('error')
@@ -27,8 +30,22 @@ export default function ClinicAppointmentsAdmin({ clinicId }) {
   }
 
   useEffect(() => {
-    load()
-  }, [clinicId])
+    let active = true
+
+    fetchAppointments()
+      .then((next) => {
+        if (!active) return
+        setAppointments(next)
+        setStatus('ready')
+      })
+      .catch(() => {
+        if (active) setStatus('error')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [fetchAppointments])
 
   const handleTransition = async (appointmentId, nextStatus) => {
     setActionId(appointmentId)

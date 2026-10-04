@@ -8,6 +8,7 @@
 
 const { getAuthAdmin, getFirestoreAdmin } = require('./lib/firebaseAdmin')
 const { FieldValue } = require('firebase-admin/firestore')
+const crypto = require('node:crypto')
 const {
   handleCorsPreflight,
   requirePostMethod,
@@ -45,16 +46,28 @@ exports.handler = async (event) => {
       return successResponse({ completed: true })
     }
 
-    // 3. Compare the Auth passwordUpdatedAt against the stored setup issuance timestamp.
+    // P08: credential-inequality proof. firebase-admin@13.10.0 does not expose
+    // passwordUpdatedAt on UserRecord (proven absent), so the guard compares the
+    // SHA-256 digest of the live Auth passwordHash against the digest stamped at
+    // provisioning. All proof inputs are server-side; the request body is ignored.
+    // Fail closed whenever either side is unavailable.
+    const storedDigest = membership.passwordSetupHashDigest
+    if (typeof storedDigest !== 'string' || storedDigest.length === 0) {
+      fail('failed-precondition', 'The permanent password has not been changed yet.')
+    }
     const userRecord = await getAuthAdmin().getUser(uid)
-    const passwordUpdatedAt = Date.parse(userRecord.passwordUpdatedAt || '') || 0
-    const setupIssuedAt = Number(membership.passwordSetupIssuedAt) || 0
-    if (!setupIssuedAt || passwordUpdatedAt <= setupIssuedAt) {
+    const livePasswordHash = userRecord.passwordHash
+    if (typeof livePasswordHash !== 'string' || livePasswordHash.length === 0) {
+      fail('failed-precondition', 'The permanent password has not been changed yet.')
+    }
+    const liveDigest = crypto.createHash('sha256').update(livePasswordHash, 'utf8').digest('hex')
+    if (liveDigest === storedDigest) {
       fail('failed-precondition', 'The permanent password has not been changed yet.')
     }
 
     await membershipRef.update({
       mustChangePassword: false,
+      passwordSetupCompletedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     })
 

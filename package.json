@@ -9,7 +9,16 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:contract": "node tests/contract-smoke.mjs",
-    "test:release-readiness": "node tests/release-readiness.mjs"
+    "test:release-readiness": "node tests/release-readiness.mjs",
+    "test:phase16:cutover": "node tests/phase16-netlify-cutover.mjs",
+    "test:phase16:a": "node tests/phase16a-infrastructure.mjs",
+    "test:phase16:b": "node tests/phase16b-groupA.mjs && node tests/phase16b-groupB.mjs && node tests/phase16b-groupC.mjs && node tests/phase16b-groupD.mjs",
+    "test:phase16": "npm run test:phase16:cutover && npm run test:phase16:a && npm run test:phase16:b",
+    "test:netlify:runtime": "node tests/netlify-admin-runtime.mjs",
+    "test:mt1:rules": "node tests/mt1-rules-matrix.mjs",
+    "test:password-setup-ordering": "node tests/password-setup-ordering.mjs",
+    "test:emulators": "npm run test:mt1:rules && npm run test:phase16 && npm run test:password-setup-ordering && npm run test:netlify:runtime",
+    "test:local": "npm run lint && npm run test:contract && npm run test:release-readiness && npm run test:emulators && npm run build"
   },
   "dependencies": {
     "firebase": "^12.19.0",

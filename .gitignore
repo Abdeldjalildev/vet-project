@@ -28,3 +28,33 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# ---------------------------------------------------------------------------
+# MT-1 verification tooling — see docs/evidence/README.md
+# ---------------------------------------------------------------------------
+# `tests/mt1-rules-matrix.mjs` is the emulator-only (demo project) Firestore
+# Rules matrix runner. It needs no production credentials, so it IS tracked and
+# is wired to `npm run test:mt1:rules`.
+#
+# Every other MT-1 script is a production probe: it needs live Firebase
+# credentials, a deployed origin, or a real Edge/CDP browser session. Those must
+# never execute in CI and are deliberately outside the tracked baseline. They
+# remain on disk as Step 2 tooling and are ignored here so the tracked tree stays
+# clean.
+tests/mt1-api-read.mjs
+tests/mt1-browser-e2e.mjs
+tests/mt1-cdp-evidence.mjs
+tests/mt1-deployed-read.mjs
+tests/mt1-local-dom.mjs
+tests/mt1-token-probe.mjs
+
+# The emulator suites above rewrite their own evidence file on every run, so a
+# tracked copy could only ever be stale and would dirty the working tree after
+# each `npm run test:local`. CI uploads them as the `emulator-evidence` artifact.
+docs/evidence/mt1-matrix-evidence.txt
+docs/evidence/password-setup-ordering-evidence.txt
+
+# Windows reserved device name. A leaked Auth credential artifact was previously
+# created under this name (`> nul` inside a non-cmd shell); never allow it back
+# into the tree.
+nul
