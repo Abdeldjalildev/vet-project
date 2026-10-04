@@ -15,7 +15,7 @@ boolean.
 | Item | Value |
 |---|---|
 | Verification date | 2026-10-04 (this session), building on the recorded gate runs of 2026-10-01/02/03 |
-| Repository state | `main` = `origin/main` = `3388d150239c7278d1bcc5506f9d7aef30cc5c4c` |
+| Repository state verified | `main` = `origin/main` = `3388d150239c7278d1bcc5506f9d7aef30cc5c4c` **at the time the probes ran** - i.e. the state under test; this record is committed on top of that commit and does not change what was verified |
 | Commits under test | `8dd4936` (Step 1 + P08 password-setup work), `3388d15` (CI emulator JDK 21) |
 | CI | GitHub Actions run `37217039059` - PASS (Java 21 emulator job) |
 | Web deployment | Vercel alias `https://vet-project-qc3h.vercel.app`, deployment `dpl_5kRVSzmV8CPtQmmV5hLjYRHRKE2Z` (commit-bound to `3388d15`) |
