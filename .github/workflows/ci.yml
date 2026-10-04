@@ -58,11 +58,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - name: Setup Java (required by the Firestore Emulator)
+      - name: Setup Java (firebase-tools 15.x needs JDK 21+ for the Firestore Emulator)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
       - name: Install dependencies
         run: npm ci
       - name: Install Firebase Emulator Suite CLI
