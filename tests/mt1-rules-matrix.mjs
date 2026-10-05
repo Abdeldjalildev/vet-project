@@ -59,7 +59,7 @@ const admin = require('firebase-admin')
 const { initializeApp } = require('firebase/app')
 const {
   getFirestore, connectFirestoreEmulator, doc, getDoc, setDoc, updateDoc, deleteDoc,
-  collection, getDocs, addDoc, query, where, limit, serverTimestamp,
+  collection, getDocs, addDoc, query, where, limit, serverTimestamp, deleteField,
 } = require('firebase/firestore')
 const {
   getAuth, connectAuthEmulator, createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -153,6 +153,11 @@ const roster = {
   inactiveA: { clinicId: 'clinicA', role: 'owner', status: 'inactive' },
   staffA: { clinicId: 'clinicA', role: 'staff', status: 'active' },
   noMembership: { unrelated: true },
+  // Owner of a clinic seeded in the EXACT shape the trusted provisioning path produces
+  // (provisionClinic.js transaction.create). P0-B3 regression: the resulting-document
+  // key whitelist must accept that server-owned shape, while every client mutation of
+  // it stays denied through the affected-key gate.
+  ownerProv: { clinicId: 'clinicProvisioned', role: 'owner', status: 'active' },
 }
 
 async function seedMemberships(personas) {
@@ -176,6 +181,20 @@ async function seed() {
   w.set(adb.doc('clinics/clinicB'), { slug: 'clinic-b', public: true, active: true, name: localized('Clinic B'), description: localized('Desc B') })
   w.set(adb.doc('clinics/clinicHidden'), { slug: 'clinic-hidden', public: false, active: true, name: localized('Hidden'), description: localized('Hidden') })
   w.set(adb.doc('clinics/clinicInactive'), { slug: 'clinic-inactive', public: true, active: false, name: localized('Inactive'), description: localized('Inactive') })
+  // P0-B3 regression fixture: the exact clinic root document shape produced by the trusted
+  // provisioning transaction (netlify/functions/provisionClinic.js:122-130). Before the
+  // rules fix this shape made EVERY client update fail the resulting-document key
+  // whitelist, which is the production defect. lifecycle/createdAt/updatedAt are the
+  // server-owned fields whose presence is legitimate but whose mutation must stay denied.
+  w.set(adb.doc('clinics/clinicProvisioned'), {
+    slug: 'clinic-provisioned',
+    public: true,
+    active: true,
+    lifecycle: 'provisioned',
+    name: localized('Provisioned clinic'),
+    createdAt: admin.firestore.Timestamp.fromMillis(1767225600000),
+    updatedAt: admin.firestore.Timestamp.fromMillis(1767225600000),
+  })
   w.set(adb.doc('clinics/clinicA/services/svcA1'), svc('Service A1', 1))
   w.set(adb.doc('clinics/clinicA/services/svcA2'), { ...svc('Service A2', 2), active: false })
   w.set(adb.doc('clinics/clinicB/services/svcB1'), svc('Service B1', 1))
@@ -357,6 +376,35 @@ await run('no-membership: clinic update', 'noMembership', 'DENY', UPDATE('clinic
 await run('no-membership: membership document create', 'noMembership', 'DENY', WRITE('users/mt1ProbeNoMem2', { clinicId: 'clinicA', role: 'owner', status: 'active' }))
 await run('no-membership: unlisted write', 'noMembership', 'DENY', WRITE('unlisted/doc3', { secret: false }))
 
+// ============ GROUP 8: P0-B3 - updates on a PROVISIONED-SHAPE clinic document ============
+// Regression for the production defect where every clinic-document update was denied.
+// The fixture clinics above predate the provisioning schema, which is exactly why the
+// defect survived CI. This group updates a clinic seeded in the producer's own shape.
+log('--- GROUP 8: P0-B3 provisioned-shape clinic document (ownerProv owns clinicProvisioned) ---')
+// Legitimate clinic-editable writes must be ACCEPTED against the provisioned shape.
+await run('provisioned clinic: owner update name (editable)', 'ownerProv', 'ALLOW', UPDATE('clinics/clinicProvisioned', { name: localized('Renamed by owner') }))
+await run('provisioned clinic: owner update description (editable)', 'ownerProv', 'ALLOW', UPDATE('clinics/clinicProvisioned', { description: localized('Owner description') }))
+await run('provisioned clinic: owner update contact (editable, valid shape)', 'ownerProv', 'ALLOW', UPDATE('clinics/clinicProvisioned', {
+  contact: { address: localized('1 Owner Street'), phone: '+213000000000', email: '' },
+}))
+// Server-owned and identity fields must stay immutable to the client, even though they
+// are legitimately present in the resulting document.
+await run('provisioned clinic: owner change lifecycle (immutable)', 'ownerProv', 'DENY', UPDATE('clinics/clinicProvisioned', { lifecycle: 'suspended' }))
+// Removing the field entirely is a distinct bypass from changing its value, so it needs its
+// own case: an owner must not be able to strip lifecycle off the document by deleting it.
+await run('provisioned clinic: owner delete lifecycle field (immutable)', 'ownerProv', 'DENY', UPDATE('clinics/clinicProvisioned', { lifecycle: deleteField() }))
+await run('provisioned clinic: owner change createdAt (immutable)', 'ownerProv', 'DENY', UPDATE('clinics/clinicProvisioned', { createdAt: deleteField() }))
+await run('provisioned clinic: owner change updatedAt (immutable)', 'ownerProv', 'DENY', UPDATE('clinics/clinicProvisioned', { updatedAt: deleteField() }))
+await run('provisioned clinic: owner change slug (identity, immutable)', 'ownerProv', 'DENY', UPDATE('clinics/clinicProvisioned', { slug: 'clinic-provisioned-2' }))
+await run('provisioned clinic: owner toggle public (platform-only)', 'ownerProv', 'DENY', UPDATE('clinics/clinicProvisioned', { public: false }))
+await run('provisioned clinic: owner toggle active (platform-only)', 'ownerProv', 'DENY', UPDATE('clinics/clinicProvisioned', { active: false }))
+// The resulting-document key whitelist must stay closed: no arbitrary field injection.
+await run('provisioned clinic: owner inject unknown field', 'ownerProv', 'DENY', UPDATE('clinics/clinicProvisioned', { injected: 'x' }))
+// Tenant isolation must hold on the provisioned shape too.
+await run('provisioned clinic: FOREIGN member update (cross-clinic)', 'memberB', 'DENY', UPDATE('clinics/clinicProvisioned', { name: localized('Taken over by B') }))
+await run('provisioned clinic: anonymous update', 'anon', 'DENY', UPDATE('clinics/clinicProvisioned', { name: localized('Anon') }))
+// The read side of the same document must remain public for a published clinic.
+await run('provisioned clinic: anonymous read (public+active)', 'anon', 'ALLOW', READ('clinics/clinicProvisioned'))
 // ================= SUMMARY =================
 const failures = results.filter((r) => !r.pass)
 const errors = results.filter((r) => r.outcome === 'ERROR')

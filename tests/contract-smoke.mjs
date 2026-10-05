@@ -98,6 +98,68 @@ assert.match(rules, /function validService\(\)/)
 assert.match(rules, /request\.resource\.data\.icon is string/)
 assert.match(rules, /request\.resource\.data\.currency\.matches\('\^\[A-Z\]\{3\}\$'/)
 assert.match(rules, /request\.resource\.data\.order is number/)
+
+// ---------------------------------------------------------------------------
+// P0-B3 drift guard: producer schema vs Firestore Rules resulting-key whitelist.
+//
+// The production defect was that provisionClinic writes `lifecycle`, `createdAt`
+// and `updatedAt` onto the clinic document while the clinic-update rule's
+// `hasOnly(...)` whitelist did not list them. Because an update is evaluated over
+// the WHOLE resulting document, that denied every clinic update for every actor.
+//
+// This guard parses BOTH sides and compares them as sets, so a future field added
+// to the producer without a matching rules entry fails here rather than in
+// production. It is intentionally a semantic comparison, not a text overlap.
+// ---------------------------------------------------------------------------
+{
+  const producerSource = netlifyFunctions.provisionClinic
+
+  // 1. The keys the trusted provisioning transaction writes to clinics/{clinicId}.
+  const clinicCreate = producerSource.match(/transaction\.create\(clinicRef,\s*\{([\s\S]*?)\}\)/)
+  assert.ok(clinicCreate, 'provisionClinic must create the clinic document via transaction.create(clinicRef, {...})')
+  const producedKeys = new Set(
+    [...clinicCreate[1].matchAll(/^\s*([A-Za-z][A-Za-z0-9_]*)\s*[:,}]/gm)].map((m) => m[1]),
+  )
+  assert.ok(producedKeys.size >= 5, `expected the clinic document to be created with several keys, parsed: ${[...producedKeys]}`)
+  for (const key of ['slug', 'public', 'active', 'lifecycle', 'createdAt', 'updatedAt']) {
+    assert.ok(producedKeys.has(key), `provisionClinic must produce the clinic field "${key}" (parsed: ${[...producedKeys]})`)
+  }
+
+  // 2. The resulting-document key whitelist of the clinic update rule.
+  const clinicUpdate = rules.match(/match \/clinics\/\{clinicId\} \{[\s\S]*?allow update: if[\s\S]*?hasOnly\(\[([^\]]*)\]\)/)
+  assert.ok(clinicUpdate, 'firestore.rules must declare a hasOnly(...) resulting-key whitelist for clinic updates')
+  const whitelistedKeys = new Set(
+    [...clinicUpdate[1].matchAll(/'([A-Za-z][A-Za-z0-9_]*)'/g)].map((m) => m[1]),
+  )
+
+  // 3. THE GUARD: every produced key must be present in the whitelist.
+  const missing = [...producedKeys].filter((key) => !whitelistedKeys.has(key))
+  assert.deepEqual(missing, [],
+    `clinic document fields produced by provisionClinic but absent from the firestore.rules ` +
+    `resulting-key whitelist (they would make EVERY clinic update fail): ${missing.join(', ')}`)
+
+  // 4. The server-owned fields must NOT be client-editable: they must stay out of the
+  //    affected-key gate, otherwise the whitelist addition would have opened a write hole.
+  const affectedGate = rules.match(/function clinicUpdateFieldsAreAllowed\(\) \{[\s\S]*?hasOnly\(\[([^\]]*)\]\)/)
+  assert.ok(affectedGate, 'firestore.rules must declare clinicUpdateFieldsAreAllowed()')
+  const affectedKeys = new Set(
+    [...affectedGate[1].matchAll(/'([A-Za-z][A-Za-z0-9_]*)'/g)].map((m) => m[1]),
+  )
+  for (const immutable of ['lifecycle', 'createdAt', 'updatedAt', 'slug', 'public', 'active']) {
+    assert.ok(!affectedKeys.has(immutable),
+      `"${immutable}" is server-owned and must never be client-editable via clinicUpdateFieldsAreAllowed()`)
+  }
+  // ...while the genuinely clinic-managed fields stay editable.
+  for (const editable of ['name', 'description', 'contact', 'branding', 'hero', 'about', 'footer', 'socialLinks']) {
+    assert.ok(affectedKeys.has(editable), `"${editable}" must remain clinic-editable`)
+  }
+
+  // 5. The resulting-key whitelist must stay CLOSED (defence in depth against field injection).
+  assert.ok(rules.includes('request.resource.data.keys().hasOnly('),
+    'the clinic update rule must keep a closed hasOnly(...) resulting-key whitelist')
+  assert.ok(!/match \/clinics\/\{clinicId\}[\s\S]*?allow update: if[\s\S]*?keys\(\)\.hasAny\(/.test(rules),
+    'the clinic update rule must not use hasAny(...)')
+}
 assert.match(rules, /request\.resource\.data\.active is bool/)
 assert.match(rules, /resource\.data\.active == true &&\s*get\(\/databases\/\$\(database\)\/documents\/clinics\/\$\(clinicId\)\)/)
 assert.match(rules, /features\.size\(\) <= 12/)
@@ -149,10 +211,34 @@ assert.match(publicClinic, /<VetTips \/>/)
 assert.match(publicClinic, /<BookingForm[^>]+clinic=/)
 assert.match(publicClinic, /<Footer clinic=/)
 
-assert.match(netlifyFunctions.provisionClinic, /passwordSetupHashDigest/)
-assert.match(netlifyFunctions.provisionClinic, /createHash\('sha256'\)/)
-assert.match(netlifyFunctions.completeClinicPasswordSetup, /passwordSetupHashDigest/)
-assert.match(netlifyFunctions.completeClinicPasswordSetup, /createHash\('sha256'\)/)
+// P08 repaired: the completion proof is the Auth `tokensValidAfterTime` marker compared against
+// the provisioning baseline. The retired password-hash digest architecture must not return.
+assert.match(netlifyFunctions.provisionClinic, /passwordSetupIssuedAt/)
+// Comments must not be able to satisfy or break these guards: compare executable code only.
+const codeOnlySource = netlifyFunctions.provisionClinic
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
+
+assert.ok(!codeOnlySource.includes('passwordSetupHashDigest'),
+  'provisioning must no longer persist a credential digest')
+assert.ok(!codeOnlySource.includes('createHash'),
+  'provisioning must no longer derive a credential digest')
+assert.ok(!codeOnlySource.includes('.passwordHash'),
+  'provisioning must no longer read passwordHash (redacted in production)')
+assert.match(netlifyFunctions.completeClinicPasswordSetup, /tokensValidAfterTime/)
+assert.match(netlifyFunctions.completeClinicPasswordSetup, /passwordSetupIssuedAt/)
+assert.match(netlifyFunctions.completeClinicPasswordSetup, /markerMs <= baseline/)
+// Comments must not be able to satisfy or break these guards: compare executable code only.
+const codeOnly = (source) => source
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
+
+assert.ok(!codeOnly(netlifyFunctions.completeClinicPasswordSetup).includes('passwordHash'),
+  'completion must no longer read passwordHash (redacted in production)')
+assert.ok(!codeOnly(netlifyFunctions.completeClinicPasswordSetup).includes('createHash'),
+  'completion must no longer derive a credential digest')
+assert.ok(!codeOnly(netlifyFunctions.completeClinicPasswordSetup).includes('passwordSetupHashDigest'),
+  'completion must no longer read a credential digest verifier')
 assert.ok(!netlifyFunctions.completeClinicPasswordSetup.includes('userRecord.passwordUpdatedAt'),
   'completion must no longer depend on passwordUpdatedAt')
 assert.ok(!netlifyFunctions.provisionClinic.includes('ownerUser.passwordUpdatedAt'),

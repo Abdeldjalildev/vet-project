@@ -78,14 +78,29 @@ field (upstream issue `firebase/firebase-admin-node#2063`), so the guard in
 with `mustChangePassword === true`.
 
 Commit `8dd4936` repaired that in source: the guard now compares a SHA-256 digest of the
-subject's **live** Auth credential material against the stored
-`passwordSetupHashDigest`. **The repair does not change the production outcome**, and the
-Step 2 verification established why with a three-state probe: in this project the Admin
-**SDK** exposes no `passwordHash`/`passwordSalt` and no `passwordUpdatedAt` at all, while
-the **raw** Identity Toolkit `accounts:lookup` call returns the credential fields. A guard
-built on the SDK surface can therefore only ever conclude "unchanged" and stays fail-closed
-at 412, which leaves clinic-owner onboarding unable to complete (reproduced end to end
-through the deployed UI).
+subject's Auth `passwordHash` against the stored `passwordSetupHashDigest`. **That repair did
+not change the production outcome**, and the Step 2 verification established why with a
+three-state probe: in this project the Admin **SDK** exposes no `passwordHash`/`passwordSalt`
+and no `passwordUpdatedAt` at all.
+
+> **Correction to the reading of that probe (recorded 2026-10-05).** An earlier version of this
+> note stated that the **raw** Identity Toolkit `accounts:lookup` call "returns the credential
+> fields", implying usable credential material was reachable. It is not. The 12-character
+> `passwordHash` it returns is the **redaction sentinel** - base64 of the literal `"REDACTED"`
+> (`UkVEQUNURUQ=`), which is why it is a constant 12 characters for every user. firebase-admin
+> maps that sentinel back to `undefined`. **No surface in this project exposes usable credential
+> material**, so the digest architecture could never succeed in production regardless of SDK
+> mapping. The defect conclusion is unchanged and, if anything, better supported.
+
+**Status: deployed 2026-10-05 and re-verified in production.** The digest architecture is removed
+entirely.
+`provisionClinic` no longer reads `passwordHash` and no longer writes `passwordSetupHashDigest`;
+`completeClinicPasswordSetup` now proves the change with the server-side Auth
+`tokensValidAfterTime` marker compared against the provisioning baseline
+`passwordSetupIssuedAt`, failing closed with 412 when either side is missing or unparseable.
+Emulator parity was established before relying on that marker: a plain sign-in does **not**
+advance it, while an admin or client password update does (one-second granularity, so a
+rotation must cross a second boundary).
 
 ### P0-B2 - the same premise makes provisioning fail
 
@@ -96,6 +111,12 @@ credential material to stamp the setup verifier. In production that read comes b
 and the function answers **HTTP 500**, rolling back cleanly (no orphan Auth account, no
 orphan clinic).
 
+**Status: deployed 2026-10-05.** Provisioning no longer reads `passwordHash`
+and no longer writes a setup verifier; it stamps only `passwordSetupIssuedAt`, the baseline
+the repaired completion guard compares against. The positive provisioning path could not be
+re-exercised in production (no `platformOwner` minting capability in this environment) - see
+"Production re-verification" below.
+
 ### P0-B3 - no clinic document can be updated at all
 
 `firestore.rules:141` whitelists 14 keys for a clinic-document update, but the clinic
@@ -104,6 +125,45 @@ document written by `provisionClinic.js:122-130` also carries `lifecycle`, `crea
 document update is denied for every actor - the clinic settings, branding and content
 editors cannot save. It is invisible to the emulator suites because the provisioning
 function is the only writer of those documents and it bypasses rules.
+
+**Status: deployed 2026-10-05 and re-verified in production (12/12).** The resulting-key whitelist now includes
+`lifecycle`, `createdAt` and `updatedAt`, and all three stay immutable to clients through the
+existing affected-key gate (verified for value change *and* field deletion). The original
+rules were re-run against producer-shaped fixtures and reproduced `permission-denied` for
+legitimate edits, so the matrix result of **127/127 PASS** is attributable to the repair.
+
+**Regression guard added.** The defect survived CI because no test compared the fields the
+producer writes against the fields the rules whitelist. `tests/contract-smoke.mjs` now parses
+both sides and fails if a field written to `clinics/{clinicId}` is absent from the rules
+whitelist, naming the offending field. The guard was negative-tested: removing `lifecycle` from
+the whitelist makes `npm run test:contract` fail with
+`...absent from the firestore.rules resulting-key whitelist: lifecycle`.
+
+### Production re-verification after the repair (2026-10-05)
+
+Firestore rules and the Netlify functions were deployed, then re-verified against production.
+
+| Gate | Result | Evidence |
+|---|---|---|
+| B1 completion guard | **PASS** | `POST completeClinicPasswordSetup` with a valid owner token now answers `HTTP 200 {"completed":true}` and writes `passwordSetupCompletedAt` / flips `mustChangePassword=false`. This is the exact call that answered `412` forever before. Unauthenticated call still `401`; repeat call idempotent `200`. |
+| B3 clinic writes | **PASS (12/12)** | An owner can now update an editable clinic field and the edit persists - the write that previously returned `permission-denied` for **every** actor. Immutability intact: `lifecycle`, `createdAt`, `updatedAt` (value change **and** field deletion), `public`, unknown-field injection, and a malformed localized value all still denied. |
+| B2 provisioning | **PARTIAL** | Boundary surface verified (`204` preflight, `401` without/with malformed token, `405` non-POST) - the function no longer errors before authorization. **The positive provisioning path could NOT be re-exercised**: it requires a `platformOwner` identity, and minting one needs a service-account private key that is not available in this environment (the Firebase CLI OAuth token cannot sign custom tokens). The removed `passwordHash` read is enforced at source level by `tests/contract-smoke.mjs`. |
+| F-2 credential remediation | **PASS** | Clinic A's owner credential was rotated to a value generated in memory and never written to disk or printed; `%TEMP%\mt1run\mt11-newpass.txt` was overwritten and deleted; verified no residue. Post-rotation sign-in with a fresh in-memory password returns `200` and with a wrong password `400`. |
+
+**Two corrections to earlier work in this file, both of which were my own test-payload errors
+rather than product defects:**
+
+1. The first B3 production probe sent `description: {en, fr}` and was denied. `validLocalized()`
+   requires **all three** of `ar`/`en`/`fr` as strings, so the payload was invalid; the denial
+   said nothing about the rules. Re-run with a valid payload it is accepted. The malformed payload
+   is retained as a check that the guard still rejects bad input.
+2. The same probe asserted CORS on `body.length > 0`, but the preflight correctly returns `204`
+   with an intentionally empty body. The assertion now checks the status.
+
+**MT-1 is NOT closed by this milestone.** The targeted B1/B2/B3 gates above pass, but the
+superseding full MT-1 run (the 293-assertion production suite recorded in
+`mt1-production-evidence.md`) has not been re-executed, and B2's positive path is unverified.
+MT-1 stays open until that superseding run is completed.
 
 ### Suite rule
 

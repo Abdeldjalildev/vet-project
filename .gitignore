@@ -58,3 +58,6 @@ docs/evidence/password-setup-ordering-evidence.txt
 # created under this name (`> nul` inside a non-cmd shell); never allow it back
 # into the tree.
 nul
+
+# Local Netlify folder
+.netlify

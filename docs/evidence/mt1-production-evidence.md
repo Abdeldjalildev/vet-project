@@ -404,6 +404,23 @@ x2 runs = 6, MT-1.6 `ERR`/`C1`/`C2` = 3, P08-1 `B1`/`B2` = 2, P08-3 `P2` = 1, P0
     service account.
   - The guard fails closed on an unreadable hash (lines 60-62), so it returns 412 before any
     comparison can succeed.
+
+> **Correction (superseded interpretation — the observation above stands, its reading did not).**
+> The rows and probe logs recorded in this section are preserved exactly as observed. The
+> *interpretation* applied to them at the time was wrong in one specific respect, and the
+> correction is material:
+>
+> The 12-character `passwordHash` returned by the raw `accounts:lookup` call is **not** credential
+> material. It is the Identity Toolkit **redaction sentinel** - base64 of the literal string
+> `"REDACTED"` (`UkVEQUNURUQ=`), which decodes to exactly 12 characters. That is why it is a
+> constant 12 chars regardless of the user or their password. firebase-admin maps that sentinel
+> back to `undefined`, which is precisely the SDK blindness described above.
+>
+> Therefore: **no surface in this project exposes usable credential material in production.**
+> Statements in this pack that treat the raw-API value as "the live hash", "the live credential
+> material" or "the material is retrievable" are incorrect and are corrected here and in section
+> 4.2. This strengthens rather than weakens the P0-B1 diagnosis: the digest architecture could
+> never succeed because its input does not exist, not merely because the SDK hid it.
 - **Causal isolation (P08-3)** - one live credential held constant, only the stored verifier varied:
 
   | # | Stored verifier on `users/{alphaUid}` | Credential state | Expected | Actual | Status |
@@ -413,9 +430,12 @@ x2 runs = 6, MT-1.6 `ERR`/`C1`/`C2` = 3, P08-1 `B1`/`B2` = 2, P08-3 `P2` = 1, P0
   | P2 | sentinel `'0'*64` (never equal to the live hash) | provably changed | `HTTP 200 {"completed":true}` | `HTTP 412 failed-precondition` | **FAIL** |
   | S3 | restored to `SHA-256(live passwordHash)` | unchanged | 64-hex verifier present | present, length 64 | PASS |
 
-  P2 is the discriminator: a stored verifier that cannot equal the live hash must yield 200, and it
-  yields 412. The missing verifier (hypothesis A) is therefore not the cause; the unreadable live
-  credential (hypothesis B) is.
+  P2 is the discriminator: a stored verifier that cannot equal the deployed guard's computed value
+  must yield 200, and it yields 412. The missing verifier (hypothesis A) is therefore not the
+  cause; the credential signal being unreadable (hypothesis B) is.
+  (Per the correction above, "the live hash" in the P1/P2/S3 rows means *the value the deployed
+  guard actually read*, which was the redaction sentinel - there was never a live hash available
+  to compare against.)
 - **Consequence:** the repair shipped in `8dd4936` is green only against the **Auth emulator**
   (`docs/evidence/password-setup-ordering-evidence.txt`: suite VERDICT PASS, emulator project
   `demo-vetlife-pso`), because the emulator does return `passwordHash` through the SDK. Its premise -
@@ -498,14 +518,20 @@ the causal diagnosis that MT-1.1U then reproduced through the real UI.
 
 ### 4.1 Operations under test
 
-- `completeClinicPasswordSetup` (Netlify, reached through the Vercel bridge). Guard contract:
-  `completeClinicPasswordSetup.js:49-66` - it derives a digest from the subject user's **live** Auth
-  credential material and compares it with the stored `passwordSetupHashDigest` on the membership. The
-  guard's inputs are server-side only: the request body can never select the user, the membership or
-  the credential.
+- `completeClinicPasswordSetup` (Netlify, reached through the Vercel bridge). Guard contract **as
+  deployed and probed in this pack (pre-repair)**: `completeClinicPasswordSetup.js:49-66` - it
+  derived a digest from the subject user's Auth `passwordHash` and compared it with the stored
+  `passwordSetupHashDigest` on the membership. The guard's inputs are server-side only: the request
+  body can never select the user, the membership or the credential.
+  **Repaired contract (in source as of this milestone):** the guard compares the server-side Auth
+  `tokensValidAfterTime` marker against the provisioning baseline `passwordSetupIssuedAt`, and
+  fails closed with 412 when either side is missing or unparseable. The digest field is no longer
+  read or written anywhere.
 - `provisionClinic` (Netlify). Contract: `provisionClinic.js:97-143` - creates the owner Auth account,
   the clinic document (`slug, public, active, lifecycle:'provisioned', name, createdAt, updatedAt`) and
-  the owner membership (`mustChangePassword`, `passwordSetupIssuedAt`, `passwordSetupHashDigest`).
+  the owner membership (`mustChangePassword`, `passwordSetupIssuedAt`). **Repaired:** the membership
+  no longer carries `passwordSetupHashDigest`, and provisioning no longer reads `passwordHash` at all
+  (which is what made it fail closed with HTTP 500).
 
 ### 4.2 Causal isolation on a live subject (P08-3)
 
@@ -514,7 +540,7 @@ Subject: `mt1-clinic-alpha` (one live credential, only the stored verifier varie
 
 | Row | Stored verifier state | Expected | Observed | What it proves |
 |---|---|---|---|---|
-| S0 | read-only: is the live credential material retrievable? | non-empty `passwordHash` from the raw Admin API | `passwordHashAvailable=true` | the raw Identity Toolkit path **does** expose the material |
+| S0 | read-only: is the credential material retrievable? | non-empty `passwordHash` from the raw Admin API | `passwordHashAvailable=true` | **corrected reading**: a value is present, but it is the `REDACTED` sentinel, not material. Availability was **not** established |
 | P0 | no stored verifier (the state the pre-repair fixture replica left behind) | 412 `failed-precondition` | 412 | contract-correct |
 | P1 | verifier = SHA-256 of the live credential hash (credential provably **unchanged**) | 412 | 412 | contract-correct, and the digest comparison itself works |
 | P2 | verifier = sentinel (credential provably **changed**) | 200 `{completed:true}` | 412 | **decisive**: the deployed function cannot read the live material, so its guard can only ever answer "not changed" - fail-closed |
@@ -522,9 +548,12 @@ Subject: `mt1-clinic-alpha` (one live credential, only the stored verifier varie
 | Z1 | control + net impact | control untouched; subject: one membership field written (`passwordSetupHashDigest` x3, plus `updatedAt`), **0 credential rotations** | as expected | the isolation changed exactly one field |
 
 Supporting field-surface comparison (`p08keys.log`, `p08lookup.log`): the Admin **SDK** `UserRecord`
-exposes no `passwordHash`/`passwordSalt` (both `undefined`) and no `passwordUpdatedAt` in this project,
-while the **raw** Identity Toolkit `accounts:lookup` call returns the credential fields. A guard built
-on the SDK surface therefore cannot observe a credential change.
+exposes no `passwordHash`/`passwordSalt` (both `undefined`) and no `passwordUpdatedAt` in this project.
+The **raw** Identity Toolkit `accounts:lookup` call returns a `passwordHash` field, but **corrected
+reading**: its value is the constant redaction sentinel `UkVEQUNURUQ=` (base64 of `"REDACTED"`, 12
+characters), not credential material - so it is equally unusable as proof of a change. A guard built
+on either surface therefore cannot observe a credential change, which is why the P2 row below is
+decisive in the negative.
 
 ### 4.3 Boundary and anti-bypass rows (P08-1)
 

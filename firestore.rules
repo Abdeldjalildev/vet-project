@@ -138,7 +138,7 @@ service cloud.firestore {
       allow read: if (resource.data.public == true && resource.data.active == true) || memberOf(clinicId);
       allow create: if false;
       allow update: if memberOf(clinicId) && ownerOrAdmin() && clinicUpdateFieldsAreAllowed() &&
-        request.resource.data.keys().hasOnly(['slug', 'public', 'active', 'name', 'description', 'logoUrl', 'branding', 'contact', 'openingHours', 'emergencyInformation', 'hero', 'about', 'footer', 'socialLinks']) &&
+        request.resource.data.keys().hasOnly(['slug', 'public', 'active', 'name', 'description', 'logoUrl', 'branding', 'contact', 'openingHours', 'emergencyInformation', 'hero', 'about', 'footer', 'socialLinks', 'lifecycle', 'createdAt', 'updatedAt']) &&
         validClinicPublicConfig();
       allow delete: if false;
 

@@ -1,10 +1,16 @@
 // Password-setup ordering contract for completeClinicPasswordSetup (P08 repaired).
 //
-// P08 ROOT CAUSE (proven by narrow Auth-emulator probe, demo-vetlife-p08-probe):
-// firebase-admin@13.10.0 UserRecord does NOT expose passwordUpdatedAt, so the old guard
-// always evaluated to 0 and completion ALWAYS answered 412. P08 repair: server-side
-// credential-inequality via passwordSetupHashDigest = SHA-256(initial passwordHash).
-// tokensValidAfterTime is diagnostic only (probe: UNCHANGED across password update).
+// P08 ROOT CAUSE (proven by a production read-only probe, and re-proven in the Auth emulator):
+// neither surface exposes credential material in production. firebase-admin maps the Identity
+// Toolkit redaction sentinel (base64 of "REDACTED", 12 chars) to `passwordHash: undefined`, and
+// `passwordUpdatedAt` is not mapped by the SDK at all. The previous digest architecture
+// (passwordSetupHashDigest = SHA-256(initial passwordHash)) therefore could never observe a
+// change in production and answered 412 forever (P0-B1), while provisioning failed closed with
+// HTTP 500 whenever the same read returned empty (P0-B2).
+//
+// P08 REPAIR: the production-available signal is `tokensValidAfterTime` (Auth `validSince`),
+// compared against the provisioning baseline `passwordSetupIssuedAt`. The marker advances when
+// the credential rotates and does NOT advance on an ordinary sign-in (both verified).
 // No plaintext, hash, digest, token or credential is ever printed by this suite.
 
 import assert from 'node:assert/strict'
@@ -157,7 +163,7 @@ const provision = async (slug, ownerEmail, temporaryPassword) => {
 }
 
 record('')
-record('--- GROUP 1: real provisioning stamps mustChangePassword=true plus a digest verifier ---')
+record('--- GROUP 1: real provisioning stamps mustChangePassword=true plus the completion baseline ---')
 const first = await provision('pso-ordering-one', 'ordering-owner-one@pso.test', 'Temporary-Password-111!')
 const firstRef = db.collection('users').doc(first.ownerUid)
 const firstMembership = (await firstRef.get()).data()
@@ -172,16 +178,20 @@ const anchor = firstMembership.passwordSetupIssuedAt
   assert.equal(typeof anchor, 'number', 'passwordSetupIssuedAt must be a number')
   assert.ok(Number.isFinite(anchor) && anchor > 0, 'the real provisioning path must store a positive epoch anchor')
 
-  const digest = firstMembership.passwordSetupHashDigest
-  assert.equal(typeof digest, 'string', 'passwordSetupHashDigest must be stored')
-  assert.match(digest, /^[0-9a-f]{64}$/, 'the digest must be a SHA-256 hex string')
+  // The retired digest verifier must NOT be stored any more: it depended on a credential
+  // signal (passwordHash) that production redacts, which is what made P0-B2 fail closed.
+  assert.equal('passwordSetupHashDigest' in firstMembership, false,
+    'passwordSetupHashDigest must no longer be written by provisioning')
 
+  // The production-available signal, recorded as safe metadata only.
   const ownerRecord = await authAdmin.getUser(first.ownerUid)
-  assert.equal(ownerRecord.passwordUpdatedAt, undefined, 'passwordUpdatedAt stays absent (retired signal)')
-  assert.ok(typeof ownerRecord.passwordHash === 'string' && ownerRecord.passwordHash.length > 0,
-    'the Admin SDK must expose the live passwordHash for the server-side comparison')
+  const marker = ownerRecord.tokensValidAfterTime
+  const markerMs = marker ? (typeof marker === 'number' ? marker : Date.parse(marker)) : NaN
+  assert.ok(Number.isFinite(markerMs), 'tokensValidAfterTime must be a parseable marker for the comparison')
+  assert.ok(markerMs <= anchor + 2000,
+    'the Auth marker must not already exceed the provisioning baseline before any change')
 
-  record('[PASS] real provisioning stores mustChangePassword=true, positive anchor, SHA-256 digest verifier')
+  record('[PASS] real provisioning stores mustChangePassword=true, a positive baseline anchor, and no digest verifier')
 }
 
 record('')
@@ -195,19 +205,34 @@ const ownerToken = await mintIdToken(first.ownerUid)
   assert.equal(json(before).error.message, 'The permanent password has not been changed yet.')
   assert.deepEqual((await firstRef.get()).data(), snapshotBefore, 'a rejected request must not write anything')
 
-  // Body-supplied state must never influence the guard: flags, digests and timestamps alike.
-  const spoofed = await complete({ mustChangePassword: false, passwordUpdatedAt: '2999-01-01T00:00:00.000Z', passwordSetupHashDigest: '0'.repeat(64), passwordChanged: true }, ownerToken)
+  // Body-supplied state must never influence the guard: flags, markers and timestamps alike.
+  // The marker value itself is not accepted from a client under any spelling.
+  const spoofed = await complete({
+    mustChangePassword: false,
+    passwordUpdatedAt: '2999-01-01T00:00:00.000Z',
+    passwordSetupHashDigest: '0'.repeat(64),
+    passwordChanged: true,
+    passwordSetupIssuedAt: 1,
+    tokensValidAfterTime: '2999-01-01T00:00:00.000Z',
+    uid: 'someone-else',
+    clinicId: 'other-clinic',
+  }, ownerToken)
   assert.equal(spoofed.statusCode, 412, spoofed.body)
   assert.deepEqual((await firstRef.get()).data(), snapshotBefore, 'a spoofed body must not write anything')
   record('[PASS] pre-change completion is 412; neither the real nor the spoofed call wrote to Firestore')
 }
 
 record('')
-record('--- GROUP 3: REAL Auth password update -> fresh sign-in token -> completion -> 200 ---')
+record('--- GROUP 3: REAL Auth password update -> token marker advances -> completion -> 200 ---')
 {
   const email = 'ordering-owner-one@pso.test'
   const temporarySignIn = await signInWithPassword(email, 'Temporary-Password-111!')
   assert.equal(temporarySignIn.status, 200, 'the temporary password must work before the change')
+
+  // The Auth marker has ONE-SECOND granularity: a rotation inside the same wall-clock second
+  // as account creation is indistinguishable from "unchanged". Cross a second boundary first,
+  // exactly as a real owner does (they cannot type a password within one second).
+  await new Promise((r) => setTimeout(r, 1500))
 
   await authAdmin.updateUser(first.ownerUid, { password: 'Permanent-Password-222!' })
 
@@ -216,6 +241,15 @@ record('--- GROUP 3: REAL Auth password update -> fresh sign-in token -> complet
   const freshSignIn = await signInWithPassword(email, 'Permanent-Password-222!')
   assert.equal(freshSignIn.status, 200, 'the permanent password must work after the change')
   assert.ok(freshSignIn.body.idToken, 'a real sign-in must return a fresh ID token')
+
+  // The credential actually rotated, AND the production proof signal advanced past baseline.
+  const rotated = await authAdmin.getUser(first.ownerUid)
+  const rotatedMarker = rotated.tokensValidAfterTime
+  const rotatedMarkerMs = rotatedMarker ? (typeof rotatedMarker === 'number' ? rotatedMarker : Date.parse(rotatedMarker)) : NaN
+  assert.ok(Number.isFinite(rotatedMarkerMs), 'tokensValidAfterTime must remain parseable after the change')
+  assert.ok(rotatedMarkerMs > anchor,
+    `tokensValidAfterTime (${new Date(rotatedMarkerMs).toISOString()}) must be strictly greater than ` +
+    `passwordSetupIssuedAt (${new Date(anchor).toISOString()}) after a real rotation`)
 
   const freshToken = freshSignIn.body.idToken
   const snapshotBefore = (await firstRef.get()).data()
@@ -228,10 +262,11 @@ record('--- GROUP 3: REAL Auth password update -> fresh sign-in token -> complet
   assert.ok(completed.updatedAt, 'updatedAt must be written on completion')
   assert.equal(completed.clinicId, snapshotBefore.clinicId, 'unrelated membership fields must be preserved')
   assert.equal(completed.role, 'owner')
-  assert.equal(completed.passwordSetupHashDigest, snapshotBefore.passwordSetupHashDigest,
-    'the stored digest must be preserved on completion')
+  assert.equal(completed.passwordSetupIssuedAt, snapshotBefore.passwordSetupIssuedAt,
+    'the baseline must be preserved on completion')
 
   record('[PASS] real password change independently proven: temporary fails 400, permanent succeeds 200')
+  record('[PASS] tokensValidAfterTime advanced beyond passwordSetupIssuedAt after the real change')
   record('[PASS] completion after the proven change is 200 with mustChangePassword=false')
 }
 
@@ -248,18 +283,40 @@ record('--- GROUP 4: idempotent repeat after completion writes nothing further -
 }
 
 record('')
-record('--- GROUP 5: fail-closed - a missing digest never completes ---')
+record('--- GROUP 5: fail-closed - an unusable baseline or an unadvanced marker never completes ---')
 {
   const second = await provision('pso-ordering-two', 'ordering-owner-two@pso.test', 'Temporary-Password-333!')
   const secondRef = db.collection('users').doc(second.ownerUid)
   const secondToken = await mintIdToken(second.ownerUid)
 
-  await secondRef.update({ passwordSetupHashDigest: FieldValue.delete() })
+  // 5a. Missing baseline: the guard must refuse rather than trust an unverifiable state.
+  await secondRef.update({ passwordSetupIssuedAt: FieldValue.delete() })
   const missing = await complete({}, secondToken)
   assert.equal(missing.statusCode, 412, missing.body)
   assert.equal(json(missing).error.code, 'failed-precondition')
-  assert.equal((await secondRef.get()).data().mustChangePassword, true, 'a missing digest must stay pending')
-  record('[PASS] a missing passwordSetupHashDigest is 412 with no completion')
+  assert.equal((await secondRef.get()).data().mustChangePassword, true, 'a missing baseline must stay pending')
+  record('[PASS] a missing passwordSetupIssuedAt is 412 with no completion')
+
+  // 5b. A non-numeric baseline is equally unverifiable and must fail closed.
+  await secondRef.update({ passwordSetupIssuedAt: 'not-a-number' })
+  const invalid = await complete({}, secondToken)
+  assert.equal(invalid.statusCode, 412, invalid.body)
+  assert.equal((await secondRef.get()).data().mustChangePassword, true, 'an invalid baseline must stay pending')
+  record('[PASS] a non-numeric passwordSetupIssuedAt is 412 with no completion')
+
+  // 5c. The password was never rotated on this account, so the marker is NOT beyond the
+  //     baseline. No credential is changed and no fake "advanced" marker is ever created:
+  //     the guard must stay closed purely on the real comparison.
+  const secondMarker = (await authAdmin.getUser(second.ownerUid)).tokensValidAfterTime
+  const secondMarkerMs = secondMarker ? (typeof secondMarker === 'number' ? secondMarker : Date.parse(secondMarker)) : NaN
+  await secondRef.update({ passwordSetupIssuedAt: Math.max(anchor, secondMarkerMs) + 60_000 })
+  const notAdvanced = await complete({}, secondToken)
+  assert.equal(notAdvanced.statusCode, 412, notAdvanced.body)
+  assert.equal(json(notAdvanced).error.code, 'failed-precondition')
+  const pendingAfter = (await secondRef.get()).data()
+  assert.equal(pendingAfter.mustChangePassword, true, 'a marker that has not advanced must stay pending')
+  assert.equal(pendingAfter.passwordSetupCompletedAt, undefined, 'no completion timestamp may be written')
+  record('[PASS] a marker that has not advanced beyond the baseline is 412 with no completion')
 }
 
 record('')
